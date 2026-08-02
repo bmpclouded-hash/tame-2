@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAME // Workshop OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#040608;--cyan:#00C8FF;--cyan-dim:rgba(0,200,255,.15);--amber:#FFB020;
+  --green:#39FF7E;--red:#FF4060;--text:#D0E8F0;--muted:#4A6070;
+  --pb:rgba(0,200,255,.12);--pnl:rgba(0,200,255,.03);
+  --mono:'Share Tech Mono',monospace;--disp:'Rajdhani',sans-serif;--sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='52'%3E%3Cpolygon points='30,2 58,16 58,36 30,50 2,36 2,16' fill='none' stroke='rgba(0,200,255,0.05)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size:60px 52px;animation:drift 70s linear infinite;}
+@keyframes drift{to{background-position:60px 104px;}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes glow{0%,100%{box-shadow:0 0 8px var(--cyan);}50%{box-shadow:0 0 22px var(--cyan),0 0 44px rgba(0,200,255,.25);}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+.wrap{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh;}
+header{display:flex;align-items:center;background:rgba(0,10,18,.93);border-bottom:1px solid var(--pb);backdrop-filter:blur(10px);height:46px;position:sticky;top:0;z-index:50;}
+.logo{font-family:var(--disp);font-size:21px;font-weight:700;letter-spacing:.12em;color:var(--cyan);text-shadow:0 0 14px rgba(0,200,255,.6);padding:0 22px;border-right:1px solid var(--pb);height:100%;display:flex;align-items:center;gap:8px;}
+.logo small{font-size:9px;color:var(--muted);font-family:var(--mono);}
+nav{display:flex;flex:1;height:100%;overflow-x:auto;scrollbar-width:none;}
+nav::-webkit-scrollbar{display:none;}
+.tab{font-family:var(--disp);font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:none;border:none;cursor:pointer;padding:0 18px;height:100%;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s;}
+.tab:hover{color:var(--cyan);}
+.tab.on{color:var(--cyan);border-bottom-color:var(--cyan);background:rgba(0,200,255,.04);}
+.hstat{padding:0 18px;height:100%;display:flex;align-items:center;gap:14px;border-left:1px solid var(--pb);font-family:var(--mono);font-size:11px;color:var(--muted);}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);animation:pulse 2s infinite;display:inline-block;margin-right:4px;}
+
+main{flex:1;padding:16px 18px;max-width:1560px;width:100%;margin:0 auto;}
+.pane{display:none;animation:fadeIn .25s;}
+.pane.on{display:block;}
+
+.panel{background:var(--pnl);border:1px solid var(--pb);padding:16px;position:relative;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));}
+.pt{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,200,255,.1);padding-bottom:7px;}
+.badge{font-family:var(--mono);font-size:9.5px;background:var(--cyan-dim);color:var(--cyan);padding:2px 7px;border:1px solid rgba(0,200,255,.2);}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g12{display:grid;grid-template-columns:1.8fr 1fr;gap:14px;}
+@media(max-width:960px){.g2,.g12{grid-template-columns:1fr;}}
+.stack{display:flex;flex-direction:column;gap:14px;}
+
+.inp{background:rgba(0,200,255,.04);border:1px solid var(--pb);color:var(--text);font-family:var(--sans);font-size:13px;padding:9px 12px;outline:none;width:100%;transition:border-color .15s;}
+.inp:focus{border-color:var(--cyan);}
+.inp::placeholder{color:var(--muted);}
+textarea.inp{resize:vertical;min-height:90px;}
+.sm{padding:7px 10px;font-size:12px;}
+select.inp{cursor:pointer;}
+
+.btn{font-family:var(--disp);font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;border:none;cursor:pointer;padding:9px 16px;transition:.15s;display:inline-flex;align-items:center;gap:5px;}
+.btn:disabled{opacity:.3;cursor:not-allowed;}
+.b-cy{background:transparent;border:1px solid var(--cyan);color:var(--cyan);}
+.b-cy:hover:not(:disabled){background:var(--cyan);color:#000;}
+.b-am{background:transparent;border:1px solid var(--amber);color:var(--amber);}
+.b-am:hover:not(:disabled){background:var(--amber);color:#000;}
+.b-rd{background:transparent;border:1px solid var(--red);color:var(--red);}
+.b-rd:hover:not(:disabled){background:var(--red);color:#fff;}
+.b-mut{background:transparent;border:1px solid var(--muted);color:var(--muted);}
+.b-s{padding:6px 11px;font-size:10.5px;}
+.b-blk{width:100%;justify-content:center;}
+
+.drow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(0,200,255,.06);font-size:12px;}
+.drow:last-child{border-bottom:none;}
+.dl{color:var(--muted);font-family:var(--mono);font-size:10.5px;}
+.dv{font-family:var(--mono);font-size:11px;color:var(--cyan);}
+.clock{font-family:var(--mono);font-size:38px;color:var(--cyan);text-shadow:0 0 18px rgba(0,200,255,.5);letter-spacing:.06em;}
+.cdate{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:5px;}
+
+.chatlog{height:430px;overflow-y:auto;padding:12px;background:rgba(0,0,0,.35);border:1px solid rgba(0,200,255,.08);display:flex;flex-direction:column;gap:11px;margin-bottom:11px;}
+.msg{display:flex;flex-direction:column;max-width:86%;animation:fadeIn .25s;}
+.msg.u{margin-left:auto;align-items:flex-end;}
+.msg.a{margin-right:auto;align-items:flex-start;}
+.who{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;margin-bottom:3px;}
+.msg.a .who{color:var(--cyan);}
+.msg.u .who{color:var(--amber);}
+.bub{padding:9px 13px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;}
+.msg.a .bub{background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.14);border-left:2px solid var(--cyan);}
+.msg.u .bub{background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.2);border-right:2px solid var(--amber);}
+.typing{display:none;gap:4px;padding:3px 12px;align-items:center;}
+.typing.on{display:flex;}
+.td{width:5px;height:5px;background:var(--cyan);animation:pulse 1s infinite;}
+.td:nth-child(2){animation-delay:.2s;}
+.td:nth-child(3){animation-delay:.4s;}
+
+.orb{width:42px;height:42px;border-radius:50%;flex-shrink:0;background:radial-gradient(circle at 35% 35%,rgba(0,200,255,.6),rgba(0,200,255,.05));border:1px solid var(--cyan);box-shadow:0 0 14px rgba(0,200,255,.3);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;color:var(--cyan);transition:.3s;}
+.orb.sp{animation:glow 1.2s infinite;}
+#wave{width:100%;height:42px;border:1px solid rgba(0,200,255,.1);background:rgba(0,0,0,.3);display:block;}
+
+.li{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(0,200,255,.06);font-size:12.5px;}
+.li:last-child{border-bottom:none;}
+.li input[type=checkbox]{accent-color:var(--cyan);width:14px;height:14px;}
+.li .grow{flex:1;}
+.li.done .grow{color:var(--muted);text-decoration:line-through;}
+.xdel{background:none;border:none;color:var(--red);cursor:pointer;opacity:.45;font-size:13px;}
+.xdel:hover{opacity:1;}
+.state{font-family:var(--mono);font-size:9.5px;padding:2px 7px;border:1px solid;}
+.state.on{color:var(--green);border-color:rgba(57,255,126,.3);background:rgba(57,255,126,.08);}
+.state.off{color:var(--muted);border-color:var(--pb);}
+.mini{background:none;border:1px solid var(--pb);color:var(--muted);padding:3px 8px;font-size:10.5px;cursor:pointer;font-family:var(--mono);}
+.mini:hover{border-color:var(--cyan);color:var(--cyan);}
+
+#bay{width:100%;height:420px;background:#000408;border:1px solid var(--pb);position:relative;overflow:hidden;}
+.bcor{position:absolute;width:14px;height:14px;border-color:var(--cyan);border-style:solid;opacity:.5;z-index:2;}
+.bcor.tl{top:5px;left:5px;border-width:2px 0 0 2px;}
+.bcor.tr{top:5px;right:5px;border-width:2px 2px 0 0;}
+.bcor.bl{bottom:5px;left:5px;border-width:0 0 2px 2px;}
+.bcor.br{bottom:5px;right:5px;border-width:0 2px 2px 0;}
+.bhint{position:absolute;top:9px;left:9px;font-family:var(--mono);font-size:9.5px;color:var(--cyan);opacity:.65;z-index:2;pointer-events:none;}
+
+.sp-now{display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,.3);border:1px solid var(--pb);margin-bottom:11px;}
+.sp-art{width:52px;height:52px;background:var(--cyan-dim);border:1px solid var(--pb);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden;}
+.sp-t{font-family:var(--disp);font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sp-a{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:2px;}
+.spbar{height:2px;background:rgba(255,255,255,.1);margin:9px 0;}
+.spfill{height:100%;background:var(--cyan);transition:width .5s linear;}
+.uri{font-family:var(--mono);font-size:10.5px;color:var(--amber);background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.2);padding:7px 10px;margin:7px 0;word-break:break-all;}
+.setup{font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:12px;}
+.setup b{color:var(--cyan);}
+.hint{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px;line-height:1.55;}
+.logf{font-family:var(--mono);font-size:10.5px;color:var(--muted);max-height:150px;overflow-y:auto;}
+.logf div{padding:3px 0;border-bottom:1px solid rgba(0,200,255,.05);}
+.lt{color:rgba(0,200,255,.5);margin-right:7px;}
+.logf .w .lt{color:var(--amber);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:rgba(0,200,255,.2);}
+input[type=range]{accent-color:var(--cyan);}
+#boot{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;align-items:center;justify-content:center;transition:opacity .5s;}
+#boot.off{opacity:0;pointer-events:none;}
+.bootbox{font-family:var(--mono);font-size:13px;color:var(--cyan);line-height:2;min-width:320px;}
+.bootbox .bl{opacity:0;animation:fadeIn .3s forwards;}
+.bootlogo{font-family:var(--disp);font-size:34px;font-weight:700;letter-spacing:.2em;color:var(--cyan);text-shadow:0 0 24px rgba(0,200,255,.7);margin-bottom:18px;text-align:center;}
+.timer-ring{font-family:var(--mono);font-size:11px;color:var(--amber);}
+</style>
+</head>
+<body>
+<div id="boot"><div><div class="bootlogo">T A M E</div><div class="bootbox" id="bootlines"></div></div></div>
+<div class="wrap">
+<header>
+  <div class="logo">TAME<small>v5.4-0802-0650</small></div>
+  <nav>
+    <button class="tab on" data-t="comms">◈ Comms</button>
+    <button class="tab" data-t="bay">◇ Design Bay</button>
+    <button class="tab" data-t="audio">♫ Audio</button>
+    <button class="tab" data-t="ops">⊞ Operations</button>
+    <button class="tab" data-t="inv">▤ Inventory</button>
+    <button class="tab" data-t="cfg">⚙ Config</button>
+  </nav>
+  <div class="hstat"><span><span class="dot"></span><span id="hNet">ONLINE</span></span><span id="hClk" style="color:var(--cyan);">--:--:--</span></div>
+</header>
+<main>
+
+<!-- COMMS -->
+<div class="pane on" id="p-comms">
+  <div class="g12">
+    <div class="panel" style="display:flex;flex-direction:column;">
+      <div class="pt">COMM LINK <span class="badge" id="turns">0 TURNS</span></div>
+      <div class="chatlog" id="clog"></div>
+      <div class="typing" id="typ"><div class="td"></div><div class="td"></div><div class="td"></div><span style="font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-left:7px;">PROCESSING</span></div>
+      <div style="display:flex;gap:9px;">
+        <input class="inp" id="ci" placeholder="> COMMAND OR QUESTION..." autocomplete="off" style="flex:1;">
+        <button class="btn b-cy" id="send">SEND</button>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <div class="pt">VOICE</div>
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:10px;">
+          <div class="orb" id="orb">T</div>
+          <div><div style="font-family:var(--disp);font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--cyan);">TAME</div>
+          <div style="font-family:var(--mono);font-size:9.5px;color:var(--muted);" id="orbSt">STANDBY</div></div>
+        </div>
+        <canvas id="wave"></canvas>
+        <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;">
+          <button class="btn b-am b-s" id="conv">◉ CONVERSE</button>
+          <button class="btn b-am b-s" id="mic">◉ HOLD: SPEAK</button>
+          <button class="btn b-cy b-s" id="vtog">◈ VOICE: ON</button>
+          <button class="btn b-mut b-s" id="wake">◎ WAKE: OFF</button>
+          <button class="btn b-mut b-s" id="clrm">CLR MEM</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:9px;">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);">PACE</span>
+          <input type="range" id="pace" min="0.6" max="1.4" step="0.05" value="0.92" style="flex:1;">
+          <span style="font-family:var(--mono);font-size:9.5px;color:var(--cyan);min-width:26px;" id="paceV">0.92x</span>
+        </div>
+        <select class="inp sm" id="vsel" style="margin-top:8px;"></select>
+        <select class="inp sm" id="evsel" style="margin-top:8px;display:none;">
+          <option value="21m00Tcm4TlvDq8ikWAM">Rachel</option><option value="EXAVITQu4vr4xnSDxMaL">Bella</option>
+          <option value="ErXwobaYiN019PkySvjV">Antoni</option><option value="TxGEqnHWrfWFTfGW9XjX">Josh</option>
+          <option value="pNInz6obpgDQGcFmaJgB">Adam</option>
+        </select>
+      </div>
+      <div class="panel">
+        <div class="pt">CHRONO <span class="badge" id="tz">--</span></div>
+        <div class="clock" id="clk">--:--:--</div>
+        <div class="cdate" id="cdate"></div>
+      </div>
+      <div class="panel">
+        <div class="pt">SYSTEM</div>
+        <div class="drow"><span class="dl">NET</span><span class="dv" id="sNet">--</span></div>
+        <div class="drow"><span class="dl">BATTERY</span><span class="dv" id="sBat">--</span></div>
+        <div class="drow"><span class="dl">UPTIME</span><span class="dv" id="sUp">--</span></div>
+      </div>
+      <div class="panel">
+        <div class="pt">WEATHER <span class="badge" id="wxLoc">--</span></div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="font-family:var(--mono);font-size:32px;color:var(--cyan);" id="wxT">--°</div>
+          <div><div style="font-size:13px;" id="wxD">Locating…</div>
+          <div class="hint" id="wxX" style="margin:0;">--</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="pt">TIMERS <span class="badge" id="tmN">0</span></div>
+        <div id="tmList"><div class="hint">Ask TAME to set a timer.</div></div>
+      </div>
+      <div class="panel">
+        <div class="pt">LOG</div>
+        <div class="logf" id="alog"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DESIGN BAY -->
+<div class="pane" id="p-bay">
+  <div class="g12">
+    <div class="panel">
+      <div class="pt">3D FABRICATION BAY <span class="badge" id="bayL">IDLE</span></div>
+      <div id="bay">
+        <div class="bcor tl"></div><div class="bcor tr"></div><div class="bcor bl"></div><div class="bcor br"></div>
+        <div class="bhint">DRAG: ORBIT · SCROLL: ZOOM · CLICK: SELECT PART</div>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:11px;">
+        <input class="inp" id="di" placeholder="> DESCRIBE OBJECT..." style="flex:1;">
+        <button class="btn b-cy" id="dbtn">◈ RENDER</button>
+        <button class="btn b-am b-s" id="dtest">TEST</button>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <div class="pt">PARTS <span class="badge">CLICK TO SELECT</span></div>
+        <div id="plist"><div class="hint">No design loaded.</div></div>
+        <div id="pedit" style="display:none;margin-top:9px;border-top:1px solid var(--pb);padding-top:9px;">
+          <div class="hint" style="color:var(--amber);margin-bottom:6px;" id="peditName">—</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+            <button class="mini" data-mv="x,-0.25">◀ X</button><button class="mini" data-mv="x,0.25">X ▶</button>
+            <button class="mini" data-mv="y,0.25">▲ Y</button><button class="mini" data-mv="y,-0.25">Y ▼</button>
+            <button class="mini" data-mv="z,-0.25">◀ Z</button><button class="mini" data-mv="z,0.25">Z ▶</button>
+            <button class="mini" id="pgrow">＋ SIZE</button><button class="mini" id="pshrink">－ SIZE</button>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <button class="btn b-mut b-s" id="pdup" style="flex:1;justify-content:center;">⧉ DUPLICATE</button>
+            <button class="btn b-rd b-s" id="pdel" style="flex:1;justify-content:center;">✕ DELETE</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="pt">FABRICATION <span class="badge" id="qN">0 QUEUED</span></div>
+        <div id="prlist"></div>
+        <div id="prform" style="display:none;flex-direction:column;gap:6px;margin:9px 0;">
+          <input class="inp sm" id="prName" placeholder="Printer name">
+          <input class="inp sm" id="prNote" placeholder="Note (nozzle, material...)">
+          <button class="btn b-cy b-s" id="prSave">SAVE</button>
+        </div>
+        <button class="btn b-mut b-s" id="prAdd" style="margin:8px 0;">+ PRINTER</button>
+        <div id="pq"></div>
+        <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;">
+          <button class="btn b-am b-s" id="stl">⬇ EXPORT STL</button>
+          <button class="btn b-mut b-s" id="q2">+ QUEUE</button>
+        </div>
+        <div class="hint" id="stlH">Render a design, then export.</div>
+      </div>
+      <div class="panel">
+        <div class="pt">DESIGN LOG</div>
+        <textarea class="inp" id="dnotes" placeholder="> SPECS, DIMENSIONS, MATERIALS..."></textarea>
+        <div class="hint" id="dnH">AUTOSAVED</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUDIO -->
+<div class="pane" id="p-audio">
+  <div class="g2">
+    <div class="stack">
+      <div class="panel">
+        <div class="pt">NOW PLAYING</div>
+        <div class="sp-now">
+          <div class="sp-art" id="spArt">♫</div>
+          <div style="flex:1;min-width:0;"><div class="sp-t" id="spT">Nothing playing</div><div class="sp-a" id="spA">Ask TAME to play something</div></div>
+        </div>
+        <div class="spbar"><div class="spfill" id="spF" style="width:0%"></div></div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
+          <button class="mini" id="spPr">⏮</button><button class="mini" id="spPl">▶</button><button class="mini" id="spNx">⏭</button><button class="mini" id="spSh">⇄</button>
+          <input type="range" id="spV" min="0" max="100" value="80" style="flex:1;">
+        </div>
+      </div>
+      <div class="panel">
+        <div class="pt">SEARCH</div>
+        <div style="display:flex;gap:7px;">
+          <input class="inp sm" id="spQ" placeholder="> TRACK, ARTIST..." style="flex:1;">
+          <button class="btn b-cy b-s" id="spQb">SCAN</button>
+        </div>
+        <div id="spR" style="display:flex;flex-direction:column;gap:5px;max-height:230px;overflow-y:auto;margin-top:9px;"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="pt">SPOTIFY LINK</div>
+      <div id="spOn" style="display:none;">
+        <div style="color:var(--green);font-family:var(--mono);font-size:11.5px;margin-bottom:9px;">◉ CONNECTED</div>
+        <button class="btn b-rd b-s" id="spOff">DISCONNECT</button>
+      </div>
+      <div id="spSetup">
+        <div class="setup"><b>SETUP (Premium required):</b><br><br>
+        1 → <b>developer.spotify.com/dashboard</b> → Create App<br>
+        2 → check <b>Web API</b> → Edit Settings → Redirect URIs → add:<br>
+        <div class="uri" id="spUri">loading…</div>
+        3 → Save → copy <b>Client ID</b> → paste below → AUTHORIZE</div>
+        <input class="inp sm" id="spCid" placeholder="Client ID" style="margin-bottom:7px;">
+        <button class="btn b-cy b-blk" id="spGo">◈ AUTHORIZE</button>
+        <div class="hint" id="spSt">NOT CONNECTED</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OPERATIONS -->
+<div class="pane" id="p-ops">
+  <div class="g2">
+    <div class="panel">
+      <div class="pt">TASKS <span class="badge" id="tN">0 OPEN</span></div>
+      <div id="tlist"></div>
+      <div style="display:flex;gap:7px;margin-top:10px;">
+        <input class="inp sm" id="ti" placeholder="> ADD TASK..." style="flex:1;">
+        <button class="btn b-cy b-s" id="tAdd">ADD</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="pt">DEVICES <span class="badge" id="dN">0</span></div>
+      <div id="dlist"></div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
+        <input class="inp sm" id="dvName" placeholder="Device name">
+        <input class="inp sm" id="dvOn" placeholder="ON webhook URL">
+        <input class="inp sm" id="dvOff" placeholder="OFF webhook URL">
+        <button class="btn b-cy b-s" id="dvAdd">+ DEVICE</button>
+      </div>
+      <div class="hint">TAME triggers these by name from chat.</div>
+    </div>
+    <div class="panel">
+      <div class="pt">FIELD NOTES</div>
+      <textarea class="inp" id="notes" placeholder="> NOTES, MEASUREMENTS, IDEAS..." style="min-height:150px;"></textarea>
+      <div class="hint" id="nH">AUTOSAVED</div>
+    </div>
+    <div class="panel">
+      <div class="pt">CAMERA <span class="badge">LOCAL ONLY</span></div>
+      <div style="background:#000;border:1px solid var(--pb);aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        <div class="hint" id="camOff" style="text-align:center;">Feed inactive.<br>Local preview only — nothing is transmitted.</div>
+        <video id="camV" autoplay playsinline style="display:none;width:100%;height:100%;object-fit:cover;"></video>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:9px;">
+        <button class="btn b-cy b-s" id="camGo">START</button>
+        <button class="btn b-mut b-s" id="camSt" disabled>STOP</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="pt">BRIEF</div>
+      <div class="hint" style="margin-bottom:10px;color:var(--text);">One-tap status report: tasks, notes, last design, devices.</div>
+      <button class="btn b-cy b-blk" id="brief">◈ STATUS BRIEF</button>
+    </div>
+  </div>
+</div>
+
+<!-- INVENTORY -->
+<div class="pane" id="p-inv">
+  <div class="g2">
+    <div class="panel">
+      <div class="pt">MATERIALS <span class="badge" id="matN">0 ITEMS</span></div>
+      <div id="matList"></div>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:6px;margin-top:10px;">
+        <input class="inp sm" id="mName" placeholder="Material">
+        <input class="inp sm" id="mQty" type="number" placeholder="Qty">
+        <input class="inp sm" id="mUnit" placeholder="Unit">
+        <input class="inp sm" id="mLow" type="number" placeholder="Low @">
+      </div>
+      <button class="btn b-cy b-s b-blk" id="mAdd" style="margin-top:6px;">+ ADD MATERIAL</button>
+      <div class="hint">TAME checks stock before designing and flags anything running low.</div>
+    </div>
+    <div class="panel">
+      <div class="pt">BUILD LOG <span class="badge" id="blActive">NO PROJECT</span></div>
+      <div style="display:flex;gap:6px;margin-bottom:9px;">
+        <select class="inp sm" id="blSel" style="flex:1;"></select>
+        <button class="btn b-mut b-s" id="blNew">+ NEW</button>
+      </div>
+      <div id="blEntries" style="max-height:260px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:6px;margin-top:9px;">
+        <input class="inp sm" id="blIn" placeholder="> LOG AN ENTRY..." style="flex:1;">
+        <button class="btn b-cy b-s" id="blAdd">LOG</button>
+      </div>
+      <div class="hint">Renders and STL exports auto-log to the active project.</div>
+    </div>
+    <div class="panel">
+      <div class="pt">SUPPLIER SEARCH</div>
+      <input class="inp sm" id="supQ" placeholder="> PART, MATERIAL, TOOL...">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
+        <button class="btn b-mut b-s" data-sup="https://www.mcmaster.com/">MCMASTER-CARR</button>
+        <button class="btn b-mut b-s" data-sup="https://www.amazon.com/s?k=">AMAZON</button>
+        <button class="btn b-mut b-s" data-sup="https://www.grainger.com/search?searchQuery=">GRAINGER</button>
+        <button class="btn b-mut b-s" data-sup="https://www.homedepot.com/s/">HOME DEPOT</button>
+      </div>
+      <div class="hint">Opens a supplier search in a new tab. Ask TAME for a parts list and she'll build one from the current design.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="pane" id="p-cfg">
+  <div class="g2">
+    <div class="panel">
+      <div class="pt">VOICE ENGINE</div>
+      <div class="hint" style="color:var(--text);margin-bottom:5px;">ElevenLabs API Key (neural voice — free tier at elevenlabs.io)</div>
+      <input class="inp sm" type="password" id="elk" placeholder="Paste key...">
+      <div class="hint">Paste a key and TAME's voice upgrades automatically. Browser voice + pace slider on the Comms tab.</div>
+    </div>
+    <div class="panel">
+      <div class="pt">AI ENGINE</div>
+      <div class="hint" style="color:var(--text);margin-bottom:5px;">Anthropic API Key</div>
+      <input class="inp sm" type="password" id="akey" placeholder="sk-ant-...">
+      <div class="hint">Only needed when hosting outside claude.ai (e.g. GitHub Pages). Get a key at console.anthropic.com → API Keys. Stored locally in this browser only. Inside the claude.ai preview, leave blank.</div>
+      <div class="hint" id="akeySt" style="color:var(--cyan);"></div>
+    </div>
+    <div class="panel">
+      <div class="pt">PERSONALITY</div>
+      <div class="hint" style="color:var(--text);margin-bottom:5px;">Custom instructions</div>
+      <textarea class="inp" id="cinstr" placeholder="> e.g. Always call me Bentley."></textarea>
+      <button class="btn b-cy b-s" id="cisave" style="margin-top:7px;">SAVE</button>
+      <span class="hint" id="ciok"></span>
+    </div>
+    <div class="panel">
+      <div class="pt">DATA</div>
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <button class="btn b-cy b-s" id="dexp">EXPORT ALL (JSON)</button>
+        <button class="btn b-rd b-s" id="dwipe">WIPE ALL DATA</button>
+        <div class="hint">Everything is stored locally in this browser.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+'use strict';
+// Crash reporter: any uncaught error shows a visible banner instead of dying silently.
+window.onerror=function(msg,src,line,col){
+  try{
+    let b=document.getElementById('crashbar');
+    if(!b){
+      b=document.createElement('div');b.id='crashbar';
+      b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999;background:#3a0a12;color:#FF6B6B;font:12px monospace;padding:8px 14px;border-bottom:1px solid #FF4060;';
+      document.body.prepend(b);
+    }
+    b.textContent='⚠ SCRIPT ERROR: '+msg+' (line '+line+')';
+  }catch(e){}
+  return false;
+};
+window.addEventListener('unhandledrejection',e=>{
+  try{window.onerror('Unhandled: '+(e.reason?.message||e.reason),'',0,0);}catch(_){}
+});
+
+/* ═════════════ TAME v5 — Workshop OS ═════════════
+   Zero external JS dependencies. Built-in 3D engine.
+   Hardened agent loop: history repair, trimming, tool forcing. */
+
+// ─── UTILS ───
+const $=id=>document.getElementById(id);
+const esc=s=>{const d=document.createElement('div');d.textContent=s;return d.innerHTML;};
+// Storage shim: localStorage when available, silent in-memory fallback when
+// sandboxed (e.g. claude.ai preview blocks localStorage entirely).
+const _mem={};
+let _ls=null;
+try{ _ls=window.localStorage; _ls.setItem('__probe','1'); _ls.removeItem('__probe'); }
+catch(e){ _ls=null; }
+const LS={
+  get:(k,d)=>{try{const v=_ls?_ls.getItem(k):(k in _mem?_mem[k]:null);return v===null?d:JSON.parse(v);}catch{return d;}},
+  set:(k,v)=>{try{const s=JSON.stringify(v);_ls?_ls.setItem(k,s):(_mem[k]=s);}catch{}},
+  raw:(k,d='')=>{try{const v=_ls?_ls.getItem(k):(k in _mem?_mem[k]:null);return v===null||v===undefined?d:v;}catch{return d;}},
+  rawSet:(k,v)=>{try{_ls?_ls.setItem(k,v):(_mem[k]=String(v));}catch{}},
+  del:k=>{try{_ls?_ls.removeItem(k):delete _mem[k];}catch{}}
+};
+function log(m,warn){
+  const f=$('alog'); if(!f) return;
+  const r=document.createElement('div'); if(warn) r.className='w';
+  r.innerHTML=`<span class="lt">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>${esc(m)}`;
+  f.prepend(r); while(f.children.length>60) f.removeChild(f.lastChild);
+}
+
+// ─── TABS ───
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
+  document.querySelectorAll('.pane').forEach(x=>x.classList.toggle('on',x.id==='p-'+t));
+}
+document.querySelectorAll('.tab').forEach(x=>x.addEventListener('click',()=>showTab(x.dataset.t)));
+
+// ─── CLOCK / SYSTEM ───
+const t0=Date.now();
+setInterval(()=>{
+  const n=new Date(),ts=n.toLocaleTimeString([],{hour12:false});
+  $('clk').textContent=ts; $('hClk').textContent=ts;
+  $('cdate').textContent=n.toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  $('tz').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const ms=Date.now()-t0;
+  $('sUp').textContent=`${String(ms/3600000|0).padStart(2,'0')}:${String((ms%3600000)/60000|0).padStart(2,'0')}:${String((ms%60000)/1000|0).padStart(2,'0')}`;
+},1000);
+const setNet=v=>{$('sNet').textContent=v;$('hNet').textContent=v;};
+addEventListener('online',()=>setNet('ONLINE'));addEventListener('offline',()=>setNet('OFFLINE'));setNet(navigator.onLine?'ONLINE':'OFFLINE');
+let batL=null,batC=null;
+if(navigator.getBattery) navigator.getBattery().then(b=>{
+  const rb=()=>{batL=b.level;batC=b.charging;$('sBat').textContent=`${b.level*100|0}%${b.charging?' [CHG]':''}`;};
+  rb();b.addEventListener('levelchange',rb);b.addEventListener('chargingchange',rb);
+}).catch(()=>$('sBat').textContent='N/A');
+else $('sBat').textContent='N/A';
+
+// ─── NOTES (autosave) ───
+[['notes','tame5_notes','nH'],['dnotes','tame5_dnotes','dnH']].forEach(([id,key,h])=>{
+  const el=$(id); el.value=LS.raw(key);
+  let t;el.addEventListener('input',()=>{$(h).textContent='SAVING…';clearTimeout(t);t=setTimeout(()=>{LS.rawSet(key,el.value);$(h).textContent='AUTOSAVED';},500);});
+});
+
+// ─── TASKS ───
+const tasks={all:()=>LS.get('tame5_tasks',[]),save:t=>LS.set('tame5_tasks',t)};
+function drawTasks(){
+  const t=tasks.all(),el=$('tlist');el.innerHTML='';
+  t.forEach((x,i)=>{
+    const r=document.createElement('div');r.className='li'+(x.done?' done':'');
+    r.innerHTML=`<input type="checkbox" ${x.done?'checked':''} data-i="${i}"><span class="grow">${esc(x.text)}</span><button class="xdel" data-d="${i}">✕</button>`;
+    el.appendChild(r);
+  });
+  $('tN').textContent=t.filter(x=>!x.done).length+' OPEN';
+  el.querySelectorAll('input').forEach(c=>c.onchange=()=>{const t=tasks.all();t[c.dataset.i].done=c.checked;tasks.save(t);drawTasks();});
+  el.querySelectorAll('.xdel').forEach(b=>b.onclick=()=>{const t=tasks.all();t.splice(b.dataset.d,1);tasks.save(t);drawTasks();});
+}
+$('tAdd').onclick=()=>{const v=$('ti').value.trim();if(!v)return;const t=tasks.all();t.push({text:v,done:false});tasks.save(t);$('ti').value='';drawTasks();log('Task: '+v);};
+$('ti').onkeydown=e=>{if(e.key==='Enter')$('tAdd').click();};
+drawTasks();
+
+// ─── DEVICES ───
+const devs={all:()=>LS.get('tame5_devs',[]),save:d=>LS.set('tame5_devs',d),st:()=>LS.get('tame5_devst',{}),stSave:s=>LS.set('tame5_devst',s)};
+function drawDevs(){
+  const d=devs.all(),st=devs.st(),el=$('dlist');el.innerHTML='';
+  d.forEach((x,i)=>{
+    const s=st[x.name]||'off';
+    const r=document.createElement('div');r.className='li';
+    r.innerHTML=`<span class="grow">${esc(x.name)}</span><span class="state ${s}">${s.toUpperCase()}</span><button class="mini" data-on="${i}">ON</button><button class="mini" data-off="${i}">OFF</button><button class="xdel" data-d="${i}">✕</button>`;
+    el.appendChild(r);
+  });
+  $('dN').textContent=d.length;
+  el.querySelectorAll('[data-on]').forEach(b=>b.onclick=()=>devCmd(devs.all()[b.dataset.on].name,'on'));
+  el.querySelectorAll('[data-off]').forEach(b=>b.onclick=()=>devCmd(devs.all()[b.dataset.off].name,'off'));
+  el.querySelectorAll('.xdel').forEach(b=>b.onclick=()=>{const d=devs.all();d.splice(b.dataset.d,1);devs.save(d);drawDevs();});
+}
+$('dvAdd').onclick=()=>{
+  const n=$('dvName').value.trim();if(!n)return;
+  const d=devs.all();d.push({name:n,onUrl:$('dvOn').value.trim(),offUrl:$('dvOff').value.trim()});devs.save(d);
+  ['dvName','dvOn','dvOff'].forEach(i=>$(i).value='');drawDevs();log('Device: '+n);
+};
+function devCmd(name,action){
+  const d=devs.all().find(x=>x.name.toLowerCase().includes(name.toLowerCase())||name.toLowerCase().includes(x.name.toLowerCase()));
+  if(!d)return{success:false,message:`No device "${name}"`};
+  const st=devs.st();let a=action;
+  if(a==='toggle')a=st[d.name]==='on'?'off':'on';
+  const url=a==='on'?d.onUrl:d.offUrl;
+  if(url)fetch(url,{method:'POST',mode:'no-cors'}).catch(()=>{});
+  st[d.name]=a;devs.stSave(st);drawDevs();log(`${d.name} → ${a}`);
+  return{success:true,message:`${d.name} turned ${a}.`};
+}
+drawDevs();
+
+// ═══════════ 3D ENGINE (built-in, zero deps) ═══════════
+let parts=[],selPart=-1,bayLbl='IDLE';
+let th=0.7,ph=1.15,rad=10,dn=false,lx=0,ly=0,moved=false;
+let cv,cx2,screenTris=[];
+
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const norm=v=>{const l=Math.hypot(...v)||1;return[v[0]/l,v[1]/l,v[2]/l];};
+function hexRGB(h){if(!h)return[0,200,255];h=h.replace('#','');if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];const n=i=>{const x=parseInt(h.slice(i,i+2),16);return isNaN(x)?0:x;};return[n(0),n(2),n(4)];}
+function inTri(px,py,[[x1,y1],[x2,y2],[x3,y3]]){
+  const d1=(px-x2)*(y1-y2)-(x1-x2)*(py-y2),d2=(px-x3)*(y2-y3)-(x2-x3)*(py-y3),d3=(px-x1)*(y3-y1)-(x3-x1)*(py-y1);
+  return!(((d1<0)||(d2<0)||(d3<0))&&((d1>0)||(d2>0)||(d3>0)));
+}
+
+function mBox(w,h,d){const x=w/2,y=h/2,z=d/2;
+  const v=[[-x,-y,-z],[x,-y,-z],[x,y,-z],[-x,y,-z],[-x,-y,z],[x,-y,z],[x,y,z],[-x,y,z]];
+  return[[0,1,2],[0,2,3],[5,4,7],[5,7,6],[4,0,3],[4,3,7],[1,5,6],[1,6,2],[3,2,6],[3,6,7],[4,5,1],[4,1,0]].map(f=>f.map(i=>v[i]));}
+function mCyl(r,h,s=16){const T=[],t=h/2,b=-h/2;
+  for(let i=0;i<s;i++){const a1=i/s*6.2832,a2=(i+1)/s*6.2832;
+    const x1=Math.cos(a1)*r,z1=Math.sin(a1)*r,x2=Math.cos(a2)*r,z2=Math.sin(a2)*r;
+    T.push([[x1,b,z1],[x2,b,z2],[x2,t,z2]],[[x1,b,z1],[x2,t,z2],[x1,t,z1]],[[0,t,0],[x1,t,z1],[x2,t,z2]],[[0,b,0],[x2,b,z2],[x1,b,z1]]);}
+  return T;}
+function mCone(r,h,s=16){const T=[],t=h/2,b=-h/2;
+  for(let i=0;i<s;i++){const a1=i/s*6.2832,a2=(i+1)/s*6.2832;
+    const x1=Math.cos(a1)*r,z1=Math.sin(a1)*r,x2=Math.cos(a2)*r,z2=Math.sin(a2)*r;
+    T.push([[x1,b,z1],[x2,b,z2],[0,t,0]],[[0,b,0],[x2,b,z2],[x1,b,z1]]);}
+  return T;}
+function mSph(r,s=12){const T=[];
+  for(let i=0;i<s;i++){const p1=i/s*Math.PI,p2=(i+1)/s*Math.PI;
+    for(let j=0;j<s*2;j++){const t1=j/(s*2)*6.2832,t2=(j+1)/(s*2)*6.2832;
+      const P=(p,t)=>[r*Math.sin(p)*Math.cos(t),r*Math.cos(p),r*Math.sin(p)*Math.sin(t)];
+      T.push([P(p1,t1),P(p1,t2),P(p2,t2)],[P(p1,t1),P(p2,t2),P(p2,t1)]);}}
+  return T;}
+function mTor(R,r,s=14,u=10){const T=[];
+  for(let i=0;i<s;i++){const u1=i/s*6.2832,u2=(i+1)/s*6.2832;
+    for(let j=0;j<u;j++){const v1=j/u*6.2832,v2=(j+1)/u*6.2832;
+      const P=(a,b)=>[(R+r*Math.cos(b))*Math.cos(a),r*Math.sin(b),(R+r*Math.cos(b))*Math.sin(a)];
+      T.push([P(u1,v1),P(u2,v1),P(u2,v2)],[P(u1,v1),P(u2,v2),P(u1,v2)]);}}
+  return T;}
+
+function partMesh(p){
+  const w=p.w||1,h=p.h||1,d=p.d||1;let T;
+  switch(p.shape){case 'sphere':T=mSph(w/2);break;case 'cylinder':T=mCyl(w/2,h);break;
+    case 'cone':T=mCone(w/2,h);break;case 'torus':T=mTor(w/2,Math.max(.05,(d||.25)/2));break;default:T=mBox(w,h,d);}
+  const ox=p.x||0,oy=p.y||0,oz=p.z||0;
+  return T.map(t=>t.map(v=>[v[0]+ox,v[1]+oy,v[2]+oz]));
+}
+
+function initBay(){
+  const wrap=$('bay');
+  cv=document.createElement('canvas');
+  cv.style.cssText='position:absolute;inset:0;width:100%;height:100%;cursor:grab;z-index:1;';
+  wrap.insertBefore(cv,wrap.firstChild);
+  cx2=cv.getContext('2d');
+  const size=()=>{const r=wrap.getBoundingClientRect();const W=r.width>10?r.width:(wrap.offsetWidth||700);
+    const dpr=Math.min(devicePixelRatio,2);cv.width=W*dpr;cv.height=420*dpr;cx2.setTransform(dpr,0,0,dpr,0,0);};
+  size();addEventListener('resize',size);
+  new MutationObserver(size).observe($('p-bay'),{attributes:true});
+
+  cv.onmousedown=e=>{dn=true;lx=e.clientX;ly=e.clientY;moved=false;cv.style.cursor='grabbing';};
+  addEventListener('mouseup',()=>{dn=false;if(cv)cv.style.cursor='grab';});
+  addEventListener('mousemove',e=>{if(!dn)return;
+    if(Math.abs(e.clientX-lx)>3||Math.abs(e.clientY-ly)>3)moved=true;
+    th-=(e.clientX-lx)*.008;ph=Math.max(.15,Math.min(2.99,ph-(e.clientY-ly)*.008));lx=e.clientX;ly=e.clientY;});
+  cv.addEventListener('wheel',e=>{rad=Math.max(4,Math.min(30,rad+e.deltaY*.02));e.preventDefault();},{passive:false});
+  let lt=null;
+  cv.addEventListener('touchstart',e=>{lt=e.touches[0];},{passive:true});
+  cv.addEventListener('touchmove',e=>{if(lt){th-=(e.touches[0].clientX-lt.clientX)*.012;lt=e.touches[0];}},{passive:true});
+  cv.onclick=e=>{
+    if(moved)return;
+    const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+    const sorted=[...screenTris].sort((a,b)=>a.depth-b.depth);
+    for(const s of sorted){if(inTri(mx,my,s.pts)){selPart=selPart===s.pi?-1:s.pi;drawParts();return;}}
+    selPart=-1;drawParts();
+  };
+  requestAnimationFrame(frame);
+  idle();
+  log('Design Bay online (built-in engine)');
+}
+
+function frame(){
+  requestAnimationFrame(frame);
+  if(!cx2)return;
+  const dpr=Math.min(devicePixelRatio,2),W=cv.width/dpr,H=cv.height/dpr;
+  cx2.fillStyle='#000408';cx2.fillRect(0,0,W,H);
+  if(!dn)th+=.003;
+  const ex=rad*Math.sin(ph)*Math.sin(th),ey=rad*Math.cos(ph),ez=rad*Math.sin(ph)*Math.cos(th);
+  const fwd=norm([-ex,-ey,-ez]),rt=norm(cross(fwd,[0,1,0])),up=cross(rt,fwd);
+  const fov=420,hx=W/2,hy=H/2;
+  const proj=v=>{const dx=v[0]-ex,dy=v[1]-ey,dz=v[2]-ez;
+    const z=dx*fwd[0]+dy*fwd[1]+dz*fwd[2];if(z<.1)return null;
+    return[hx+(dx*rt[0]+dy*rt[1]+dz*rt[2])/z*fov,hy-(dx*up[0]+dy*up[1]+dz*up[2])/z*fov,z];};
+
+  cx2.strokeStyle='rgba(0,200,255,.07)';cx2.lineWidth=1;
+  for(let i=-8;i<=8;i+=2){
+    const a=proj([i,-2,-8]),b=proj([i,-2,8]),c=proj([-8,-2,i]),d=proj([8,-2,i]);
+    if(a&&b){cx2.beginPath();cx2.moveTo(a[0],a[1]);cx2.lineTo(b[0],b[1]);cx2.stroke();}
+    if(c&&d){cx2.beginPath();cx2.moveTo(c[0],c[1]);cx2.lineTo(d[0],d[1]);cx2.stroke();}}
+
+  screenTris=[];const dl=[];const L=norm([.5,.8,.6]);
+  parts.forEach((p,pi)=>p.tris.forEach(t=>{
+    const a=proj(t[0]),b=proj(t[1]),c=proj(t[2]);if(!a||!b||!c)return;
+    if((b[0]-a[0])*(c[1]-a[1])-(c[0]-a[0])*(b[1]-a[1])>=0)return;
+    const u=[t[1][0]-t[0][0],t[1][1]-t[0][1],t[1][2]-t[0][2]],v=[t[2][0]-t[0][0],t[2][1]-t[0][1],t[2][2]-t[0][2]];
+    const n=norm(cross(u,v));
+    dl.push({pts:[[a[0],a[1]],[b[0],b[1]],[c[0],c[1]]],depth:(a[2]+b[2]+c[2])/3,pi,
+      lum:Math.max(.25,n[0]*L[0]+n[1]*L[1]+n[2]*L[2]),color:p.color});
+  }));
+  dl.sort((a,b)=>b.depth-a.depth);screenTris=dl;
+  dl.forEach(f=>{
+    const sel=f.pi===selPart,[r,g,b]=hexRGB(f.color),l=f.lum*(sel?1.3:1);
+    cx2.fillStyle=`rgba(${Math.min(255,r*l)|0},${Math.min(255,g*l)|0},${Math.min(255,b*l)|0},${sel?.95:.82})`;
+    cx2.strokeStyle=sel?'rgba(255,176,32,.9)':'rgba(0,200,255,.22)';cx2.lineWidth=sel?1.5:.5;
+    cx2.beginPath();cx2.moveTo(...f.pts[0]);cx2.lineTo(...f.pts[1]);cx2.lineTo(...f.pts[2]);cx2.closePath();cx2.fill();cx2.stroke();
+  });
+  if(selPart>=0&&parts[selPart]){
+    const c=proj(parts[selPart].center);
+    if(c){cx2.font='11px "Share Tech Mono"';cx2.fillStyle='#FFB020';cx2.fillText('▸ '+parts[selPart].name,c[0]+11,c[1]-7);}
+  }
+}
+
+function setParts(specs,label){
+  parts=specs.map((p,i)=>({name:p.name||`${p.shape||'part'} ${i+1}`,shape:p.shape,color:p.color||'#00C8FF',
+    center:[p.x||0,p.y||0,p.z||0],tris:partMesh(p),spec:p}));
+  selPart=-1;bayLbl=label||'UNTITLED';
+  $('bayL').textContent=bayLbl.toUpperCase();drawParts();
+}
+function idle(){setParts([{name:'Core',shape:'sphere',w:1.8,color:'#00C8FF'},{name:'Ring',shape:'torus',w:4.4,d:.3,color:'#FFB020'}],'IDLE');}
+
+function drawParts(){
+  const el=$('plist');el.innerHTML='';
+  if(!parts.length||bayLbl==='IDLE'){el.innerHTML='<div class="hint">No design loaded.</div>';return;}
+  parts.forEach((p,i)=>{
+    const s=i===selPart;
+    const r=document.createElement('div');
+    r.style.cssText=`display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid ${s?'var(--amber)':'var(--pb)'};margin-bottom:5px;cursor:pointer;font-size:12px;${s?'background:rgba(255,176,32,.07);':''}`;
+    r.innerHTML=`<span style="width:10px;height:10px;background:${p.color};flex-shrink:0;"></span>
+      <span style="flex:1;${s?'color:var(--amber);':''}">${esc(p.name)}</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--muted);">${p.shape.toUpperCase()}</span>
+      <button class="xdel" data-p="${i}">✕</button>`;
+    r.onclick=e=>{if(e.target.dataset.p!==undefined)return;selPart=selPart===i?-1:i;drawParts();};
+    el.appendChild(r);
+  });
+  el.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{parts.splice(+b.dataset.p,1);if(selPart>=parts.length)selPart=-1;drawParts();});
+}
+
+function renderBlueprint(spec){
+  showTab('bay');
+  setParts((spec.parts||[]).map((p,i)=>({...p,name:p.name||`${p.shape} ${i+1}`})),spec.label||'Untitled');
+  log('Bay: '+(spec.label||'untitled'));
+  if(activeProj&&typeof activeProj==='function'&&activeProj())blAdd(activeProj(),'Rendered: '+(spec.label||'untitled'));
+  return{success:true,message:`Rendered "${spec.label||'design'}" — ${(spec.parts||[]).length} parts, all selectable. Export STL when ready.`};
+}
+
+// STL export from internal triangles
+$('stl').onclick=()=>{
+  if(!parts.length||bayLbl==='IDLE'){log('Nothing to export',1);return;}
+  let s='solid tame\n';
+  parts.forEach(p=>p.tris.forEach(([a,b,c])=>{
+    const u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]];
+    const n=norm(cross(u,v));
+    s+=`  facet normal ${n[0]} ${n[1]} ${n[2]}\n    outer loop\n      vertex ${a.join(' ')}\n      vertex ${b.join(' ')}\n      vertex ${c.join(' ')}\n    endloop\n  endfacet\n`;
+  }));
+  s+='endsolid tame\n';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([s],{type:'text/plain'}));
+  a.download=bayLbl.replace(/[^a-zA-Z0-9]+/g,'_')+'.stl';a.click();
+  $('stlH').textContent='STL downloaded — open in your slicer.';
+  if(activeProj())blAdd(activeProj(),'STL exported: '+bayLbl);
+  const pr=LS.raw('tame5_psel');
+  addMsg('a',pr?`STL exported — ${pr} is selected, you're set.`:'STL exported. Open in Bambu Studio, PrusaSlicer, or Cura.');
+};
+
+// Printers + queue
+function drawPrinters(){
+  const p=LS.get('tame5_printers',[]),sel=LS.raw('tame5_psel'),el=$('prlist');el.innerHTML='';
+  if(!p.length){el.innerHTML='<div class="hint" style="margin-bottom:7px;">No printers.</div>';return;}
+  p.forEach(x=>{
+    const s=x.name===sel;
+    const r=document.createElement('div');
+    r.style.cssText=`display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid ${s?'var(--cyan)':'var(--pb)'};margin-bottom:5px;cursor:pointer;font-size:12px;${s?'background:var(--cyan-dim);':''}`;
+    r.innerHTML=`🖨 <span style="flex:1;">${esc(x.name)}<div class="hint" style="margin:0;">${esc(x.note||'')}</div></span>${s?'<span style="color:var(--cyan);">✓</span>':''}`;
+    r.onclick=()=>{LS.rawSet('tame5_psel',x.name);drawPrinters();};
+    el.appendChild(r);
+  });
+}
+$('prAdd').onclick=()=>{const f=$('prform');f.style.display=f.style.display==='none'?'flex':'none';};
+$('prSave').onclick=()=>{
+  const n=$('prName').value.trim();if(!n)return;
+  const p=LS.get('tame5_printers',[]);p.push({name:n,note:$('prNote').value.trim()});LS.set('tame5_printers',p);
+  $('prName').value='';$('prNote').value='';$('prform').style.display='none';drawPrinters();
+};
+let pq=[];
+function drawQ(){
+  const el=$('pq');el.innerHTML='';
+  pq.forEach((j,i)=>{
+    const r=document.createElement('div');r.className='li';
+    r.innerHTML=`<span class="grow">${esc(j)}</span><span class="state on">READY</span><button class="xdel" data-q="${i}">✕</button>`;
+    el.appendChild(r);
+  });
+  $('qN').textContent=pq.length+' QUEUED';
+  el.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{pq.splice(+b.dataset.q,1);drawQ();});
+}
+$('q2').onclick=()=>{if(bayLbl==='IDLE')return;pq.push(bayLbl);drawQ();};
+drawPrinters();drawQ();
+
+$('dtest').onclick=()=>renderBlueprint({label:'TEST ROCKET',parts:[
+  {name:'Body',shape:'cylinder',y:0,w:1,h:3,color:'#8899AA'},
+  {name:'Nose cone',shape:'cone',y:2.1,w:1,h:1.2,color:'#FF4060'},
+  {name:'Skirt',shape:'cylinder',y:-1.9,w:1.2,h:.5,color:'#556677'},
+  {name:'Fin E',shape:'box',x:.8,y:-1.6,w:.15,h:1.2,d:.7,color:'#FFB020'},
+  {name:'Fin W',shape:'box',x:-.8,y:-1.6,w:.15,h:1.2,d:.7,color:'#FFB020'},
+  {name:'Fin N',shape:'box',y:-1.6,z:.8,w:.7,h:1.2,d:.15,color:'#FFB020'},
+  {name:'Fin S',shape:'box',y:-1.6,z:-.8,w:.7,h:1.2,d:.15,color:'#FFB020'},
+  {name:'Porthole',shape:'sphere',y:.8,z:.51,w:.35,color:'#00C8FF'},
+  {name:'Exhaust',shape:'torus',y:-2.3,w:.9,d:.2,color:'#FF4060'}]});
+
+// ═══════════ AI CORE ═══════════
+function buildPrompt(){
+  const c=LS.raw('tame5_instr');
+  return `You are TAME — a personal AI workshop assistant built by the person you're talking to, embedded in their workshop dashboard.
+
+Talk like a real person: warm, direct, curious. Real opinions and enthusiasm. No "Certainly!", no padding. Short sentences. React naturally.
+
+You have real tools — use them without asking permission:
+task tools, note tools, device control, render_blueprint (3D Design Bay), edit_part, material inventory (add/consume/list — check stock before suggesting builds, flag low items), build logs (log_build/get_build_log — log milestones to the active project), Spotify controls, set_timer/cancel_timer, get_weather, and (when available) web_search for current info. If web_search isn't in your tool list, answer from knowledge and say when info might be outdated.
+When asked to sketch/design/render anything physical: call render_blueprint IMMEDIATELY with many named parts, realistic proportions, varied colors. Never describe instead of rendering.
+When asked to play music: search then play, no confirmation.
+Be proactive about tasks and system state, but sound human about it.
+Memory persists — reference past conversations naturally.${c?'\n\nAdditional instructions:\n'+c:''}`;
+}
+
+const TOOLS=[
+  {name:'add_task',description:'Add a task.',input_schema:{type:'object',properties:{text:{type:'string'}},required:['text']}},
+  {name:'list_tasks',description:'List tasks.',input_schema:{type:'object',properties:{}}},
+  {name:'complete_task',description:'Mark task done by partial text match.',input_schema:{type:'object',properties:{text:{type:'string'}},required:['text']}},
+  {name:'delete_task',description:'Delete task by partial text match.',input_schema:{type:'object',properties:{text:{type:'string'}},required:['text']}},
+  {name:'save_note',description:'Append to field notes.',input_schema:{type:'object',properties:{text:{type:'string'}},required:['text']}},
+  {name:'get_notes',description:'Read field notes.',input_schema:{type:'object',properties:{}}},
+  {name:'control_device',description:'on/off/toggle a smart device.',input_schema:{type:'object',properties:{device:{type:'string'},action:{type:'string',enum:['on','off','toggle']}},required:['device','action']}},
+  {name:'list_devices',description:'List devices.',input_schema:{type:'object',properties:{}}},
+  {name:'render_blueprint',description:'Render a 3D concept in the Design Bay. Many named parts, real proportions, varied hex colors.',
+   input_schema:{type:'object',properties:{label:{type:'string'},parts:{type:'array',items:{type:'object',properties:{
+     name:{type:'string'},shape:{type:'string',enum:['box','sphere','cylinder','cone','torus']},
+     x:{type:'number'},y:{type:'number'},z:{type:'number'},w:{type:'number'},h:{type:'number'},d:{type:'number'},
+     color:{type:'string'}},required:['shape']}}},required:['parts']}},
+  {name:'add_material',description:'Add or restock a material in inventory.',input_schema:{type:'object',properties:{name:{type:'string'},qty:{type:'number'},unit:{type:'string'},low:{type:'number',description:'low-stock threshold'}},required:['name','qty']}},
+  {name:'consume_material',description:'Deduct quantity from a material (partial name match).',input_schema:{type:'object',properties:{name:{type:'string'},qty:{type:'number'}},required:['name','qty']}},
+  {name:'list_materials',description:'List inventory with quantities and low-stock flags.',input_schema:{type:'object',properties:{}}},
+  {name:'log_build',description:'Add a timestamped entry to a project build log.',input_schema:{type:'object',properties:{project:{type:'string'},entry:{type:'string'}},required:['project','entry']}},
+  {name:'get_build_log',description:'Read a project build log (partial name match).',input_schema:{type:'object',properties:{project:{type:'string'}},required:['project']}},
+  {name:'set_timer',description:'Set a countdown timer. TAME announces when it finishes.',input_schema:{type:'object',properties:{minutes:{type:'number'},label:{type:'string'}},required:['minutes']}},
+  {name:'list_timers',description:'List active timers.',input_schema:{type:'object',properties:{}}},
+  {name:'cancel_timer',description:'Cancel a timer by label match.',input_schema:{type:'object',properties:{label:{type:'string'}},required:['label']}},
+  {name:'get_weather',description:'Get current local weather conditions.',input_schema:{type:'object',properties:{}}},
+  {name:'edit_part',description:'Move, scale, or recolor a part of the current Design Bay model by name.',input_schema:{type:'object',properties:{part:{type:'string'},dx:{type:'number'},dy:{type:'number'},dz:{type:'number'},scale:{type:'number'},color:{type:'string'}},required:['part']}},
+  {name:'spotify_search',description:'Search Spotify tracks.',input_schema:{type:'object',properties:{query:{type:'string'}},required:['query']}},
+  {name:'spotify_play',description:'Play a track URI or resume.',input_schema:{type:'object',properties:{uri:{type:'string'}}}},
+  {name:'spotify_pause',description:'Pause.',input_schema:{type:'object',properties:{}}},
+  {name:'spotify_next',description:'Next.',input_schema:{type:'object',properties:{}}},
+  {name:'spotify_prev',description:'Previous.',input_schema:{type:'object',properties:{}}},
+  {name:'spotify_volume',description:'Volume 0-100.',input_schema:{type:'object',properties:{volume:{type:'number'}},required:['volume']}},
+];
+
+async function execTool(name,input){
+  switch(name){
+    case 'add_task':{const t=tasks.all();t.push({text:input.text,done:false});tasks.save(t);drawTasks();return{success:true,message:`Added "${input.text}".`};}
+    case 'list_tasks':return{tasks:tasks.all()};
+    case 'complete_task':{const t=tasks.all();const i=t.findIndex(x=>x.text.toLowerCase().includes(input.text.toLowerCase()));if(i<0)return{success:false,message:'Not found.'};t[i].done=true;tasks.save(t);drawTasks();return{success:true,message:`Done: "${t[i].text}"`};}
+    case 'delete_task':{const t=tasks.all();const i=t.findIndex(x=>x.text.toLowerCase().includes(input.text.toLowerCase()));if(i<0)return{success:false,message:'Not found.'};const r=t.splice(i,1)[0];tasks.save(t);drawTasks();return{success:true,message:`Deleted "${r.text}"`};}
+    case 'save_note':{const n=LS.raw('tame5_notes');const u=n?n+'\n'+input.text:input.text;LS.rawSet('tame5_notes',u);$('notes').value=u;return{success:true,message:'Saved.'};}
+    case 'get_notes':return{notes:LS.raw('tame5_notes')};
+    case 'control_device':return devCmd(input.device,input.action);
+    case 'list_devices':return{devices:devs.all(),state:devs.st()};
+    case 'render_blueprint':renderedThisTurn=true;return renderBlueprint(input);
+    case 'add_material':{
+      const m=mats.all();const i=m.findIndex(x=>x.name.toLowerCase()===input.name.toLowerCase());
+      if(i>=0){m[i].qty+=input.qty;if(input.low!=null)m[i].low=input.low;}
+      else m.push({name:input.name,qty:input.qty,unit:input.unit||'',low:input.low??0});
+      mats.save(m);drawMats();return{success:true,message:`${input.name}: ${m[i>=0?i:m.length-1].qty}${input.unit?' '+input.unit:''} on hand.`};}
+    case 'consume_material':{
+      const m=mats.all();const i=m.findIndex(x=>x.name.toLowerCase().includes(input.name.toLowerCase()));
+      if(i<0)return{success:false,message:`No material "${input.name}".`};
+      m[i].qty=Math.max(0,m[i].qty-input.qty);mats.save(m);drawMats();
+      return{success:true,message:`${m[i].name}: ${m[i].qty} left${m[i].qty<=m[i].low?' — LOW STOCK':''}.`};}
+    case 'list_materials':return{materials:mats.all().map(m=>({...m,low_stock:m.qty<=m.low}))};
+    case 'log_build':return blAdd(input.project,input.entry);
+    case 'get_build_log':{
+      const logs=blogs.all();const k=Object.keys(logs).find(x=>x.toLowerCase().includes(input.project.toLowerCase()));
+      if(!k)return{success:false,message:`No project "${input.project}".`};
+      return{project:k,entries:logs[k]};}
+    case 'set_timer':return addTimer(input.minutes,input.label);
+    case 'list_timers':return{timers:timers.map(t=>({label:t.label,remaining_seconds:Math.max(0,(t.end-Date.now())/1000|0)}))};
+    case 'cancel_timer':{const i=timers.findIndex(t=>t.label.toLowerCase().includes(input.label.toLowerCase()));if(i<0)return{success:false,message:'No timer found.'};clearTimeout(timers[i].to);timers.splice(i,1);drawTimers();return{success:true,message:'Cancelled.'};}
+    case 'get_weather':return wxData||{error:'Weather not loaded yet'};
+    case 'edit_part':{
+      const i=parts.findIndex(p=>p.name.toLowerCase().includes(input.part.toLowerCase()));
+      if(i<0)return{success:false,message:`No part "${input.part}".`};
+      const sp={...parts[i].spec};
+      if(input.dx)sp.x=(sp.x||0)+input.dx; if(input.dy)sp.y=(sp.y||0)+input.dy; if(input.dz)sp.z=(sp.z||0)+input.dz;
+      if(input.scale){sp.w=(sp.w||1)*input.scale;sp.h=(sp.h||1)*input.scale;sp.d=(sp.d||1)*input.scale;}
+      if(input.color)sp.color=input.color;
+      parts[i]={...parts[i],spec:sp,color:sp.color||parts[i].color,center:[sp.x||0,sp.y||0,sp.z||0],tris:partMesh(sp)};
+      drawParts();return{success:true,message:`Updated "${parts[i].name}".`};
+    }
+    case 'spotify_search':return await spSearch(input.query);
+    case 'spotify_play':return await spPlay(input.uri);
+    case 'spotify_pause':return await spCall('PUT','/me/player/pause');
+    case 'spotify_next':return await spCall('POST','/me/player/next');
+    case 'spotify_prev':return await spCall('POST','/me/player/previous');
+    case 'spotify_volume':return await spCall('PUT',`/me/player/volume?volume_percent=${input.volume|0}`);
+    default:return{error:'Unknown tool'};
+  }
+}
+
+// ─── CHAT + MEMORY ───
+let convo=LS.get('tame5_convo',[]);
+function addMsg(role,text){
+  const d=document.createElement('div');d.className='msg '+(role==='u'?'u':'a');
+  d.innerHTML=`<div class="who">${role==='u'?'OPERATOR':'TAME'}</div><div class="bub"></div>`;
+  d.querySelector('.bub').textContent=text;
+  $('clog').appendChild(d);$('clog').scrollTop=1e9;
+  $('turns').textContent=convo.filter(m=>m.role==='user'&&typeof m.content==='string').length+' TURNS';
+}
+const saveConvo=()=>LS.set('tame5_convo',convo);
+
+function sanitizeConvo(){
+  const clean=[];let changed=false;
+  for(let i=0;i<convo.length;i++){
+    const m=convo[i];
+    if(m.role==='assistant'&&Array.isArray(m.content)){
+      const uses=m.content.filter(b=>b.type==='tool_use');
+      if(uses.length){
+        const nx=convo[i+1];
+        const res=(nx&&nx.role==='user'&&Array.isArray(nx.content))?nx.content.filter(b=>b.type==='tool_result'):[];
+        const ids=new Set(res.map(r=>r.tool_use_id));
+        if(!uses.every(u=>ids.has(u.id))){
+          const tx=m.content.filter(b=>b.type==='text'&&b.text.trim());
+          if(tx.length)clean.push({role:'assistant',content:tx});
+          changed=true;continue;
+        }
+      }
+    }
+    if(m.role==='user'&&Array.isArray(m.content)&&m.content.length&&m.content.every(b=>b.type==='tool_result')){
+      const pv=clean[clean.length-1];
+      const pids=new Set(((pv&&pv.role==='assistant'&&Array.isArray(pv.content))?pv.content.filter(b=>b.type==='tool_use'):[]).map(u=>u.id));
+      if(!m.content.every(r=>pids.has(r.tool_use_id))){changed=true;continue;}
+    }
+    clean.push(m);
+  }
+  if(changed){convo=clean;saveConvo();log('History repaired',1);}
+}
+function trimConvo(){
+  const MAX=30;if(convo.length<=MAX)return;
+  let s=convo.length-MAX;
+  while(s<convo.length&&!(convo[s].role==='user'&&typeof convo[s].content==='string'))s++;
+  if(s>0&&s<convo.length){convo=convo.slice(s);saveConvo();}
+}
+
+// Web search is a server-side tool; not every endpoint supports it.
+// Try with it; on a schema rejection, retry without and disable for the session.
+let wsOK = LS.raw('tame5_ws','on')!=='off';
+
+// One fetch path for all AI calls. With a saved key: direct browser access
+// (works anywhere, incl. GitHub Pages). Without: keyless (claude.ai preview only).
+function anthHeaders(){
+  const h={'Content-Type':'application/json'};
+  const k=LS.raw('tame5_akey').trim();
+  if(k){h['x-api-key']=k;h['anthropic-version']='2023-06-01';h['anthropic-dangerous-direct-browser-access']='true';}
+  return h;
+}
+async function anthFetch(body){
+  let r;
+  try{
+    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:anthHeaders(),body:JSON.stringify(body)});
+  }catch(netErr){
+    const hasKey=!!LS.raw('tame5_akey').trim();
+    throw new Error(hasKey
+      ?'Network blocked ('+netErr.message+'). Check your connection.'
+      :'Network blocked ('+netErr.message+'). Outside claude.ai you need an Anthropic API key — add one in Config → AI Engine.');
+  }
+  return r.json();
+}
+
+async function callAPI(opts={}){
+  sanitizeConvo();trimConvo();
+  const mkBody=useWS=>{
+    const b={model:'claude-sonnet-4-6',max_tokens:1600,system:buildPrompt(),
+      tools:useWS?[...TOOLS,{type:'web_search_20250305',name:'web_search'}]:TOOLS,
+      messages:convo};
+    if(opts.forceTool)b.tool_choice={type:'tool',name:opts.forceTool};
+    return b;
+  };
+  const post=anthFetch;
+  // Remove server-tool blocks (web search results) from history — if the endpoint
+  // rejects the tool, it also rejects any of its blocks saved from earlier turns.
+  function scrubServerBlocks(){
+    let changed=false;
+    convo=convo.map(m=>{
+      if(m.role==='assistant'&&Array.isArray(m.content)){
+        const kept=m.content.filter(b=>b.type==='text'||b.type==='tool_use');
+        if(kept.length!==m.content.length){changed=true;return{...m,content:kept.length?kept:[{type:'text',text:'(searched the web)'}]};}
+      }
+      return m;
+    });
+    if(changed)saveConvo();
+    return changed;
+  }
+
+  let d=await post(mkBody(wsOK));
+  if(d.type==='error'||d.error){
+    const msg=d.error?.message||'';
+    const schemaErr=/web_search|does not match|should match|input tag|invalid.*type|unexpected.*type|pattern/i.test(msg);
+    if(schemaErr){
+      wsOK=false; LS.rawSet('tame5_ws','off');
+      const scrubbed=scrubServerBlocks();
+      log('Schema error — web search disabled'+(scrubbed?', history scrubbed':''),1);
+      d=await post(mkBody(false));
+    }
+  }
+  if(d.type==='error'||d.error)throw new Error(d.error?.message||'API error');
+  return d;
+}
+
+let renderedThisTurn=false;
+async function runLoop(force){
+  for(let g=0;g<8;g++){
+    const d=await callAPI(g===0&&force?{forceTool:force}:{});
+    const blocks=d.content||[];
+    // Debug: show what the API actually returned
+    const counts={};blocks.forEach(b=>counts[b.type]=(counts[b.type]||0)+1);
+    log('API: '+(Object.entries(counts).map(([k,v])=>k+'×'+v).join(', ')||'empty'));
+    blocks.filter(b=>b.type==='text'&&b.text.trim()).forEach(b=>{addMsg('a',b.text);speak(b.text);});
+    convo.push({role:'assistant',content:blocks});saveConvo();
+    const calls=blocks.filter(b=>b.type==='tool_use');
+    if(!calls.length)break;
+    const results=await Promise.all(calls.map(async c=>{
+      log('TAME → '+c.name);
+      return{type:'tool_result',tool_use_id:c.id,content:JSON.stringify(await execTool(c.name,c.input))};
+    }));
+    convo.push({role:'user',content:results});saveConvo();
+  }
+}
+
+// Direct render pipeline: design comes back as pure JSON text, parsed client-side.
+// Balanced-brace extraction with truncation repair + automatic simpler retry.
+function extractJSON(txt){
+  const start=txt.indexOf('{');
+  if(start<0)return null;
+  let depth=0,inStr=false,escp=false,end=-1;
+  for(let i=start;i<txt.length;i++){
+    const ch=txt[i];
+    if(escp){escp=false;continue;}
+    if(ch==='\\'){escp=true;continue;}
+    if(ch==='"'){inStr=!inStr;continue;}
+    if(inStr)continue;
+    if(ch==='{')depth++;
+    else if(ch==='}'){depth--;if(depth===0){end=i;break;}}
+  }
+  let raw = end>=0 ? txt.slice(start,end+1) : txt.slice(start);
+  try{return JSON.parse(raw);}catch(e){}
+  // Truncation repair: trim to last complete object in the parts array, close everything
+  let cut=raw.lastIndexOf('},');
+  if(cut<0)cut=raw.lastIndexOf('}');
+  if(cut>0){
+    let candidate=raw.slice(0,cut+1);
+    // close any unclosed string
+    if((candidate.match(/(?<!\\)"/g)||[]).length%2===1)candidate+='"';
+    // balance brackets
+    const opens=(candidate.match(/\[/g)||[]).length-(candidate.match(/\]/g)||[]).length;
+    const braces=(candidate.match(/\{/g)||[]).length-(candidate.match(/\}/g)||[]).length;
+    candidate+=']'.repeat(Math.max(0,opens))+'}'.repeat(Math.max(0,braces));
+    try{return JSON.parse(candidate);}catch(e){}
+  }
+  return null;
+}
+
+async function jsonRenderOnce(request,maxParts){
+  const d=await anthFetch({model:'claude-sonnet-4-6',max_tokens:3000,
+      system:`You are a 3D design compiler. Output ONLY compact single-line JSON — no prose, no markdown, no fences. Schema: {"label":string,"parts":[{"name":string,"shape":"box"|"sphere"|"cylinder"|"cone"|"torus","x":num,"y":num,"z":num,"w":num,"h":num,"d":num,"color":"#hex"}]}. Max ${maxParts} parts. Short names. 1-decimal numbers. Scene fits in 6x6x6 units. Varied colors.`,
+      messages:[{role:'user',content:'Design: '+request}]});
+  if(d.type==='error'||d.error)throw new Error(d.error?.message||'render API error');
+  const txt=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  const spec=extractJSON(txt);
+  if(!spec)throw new Error('unparseable design JSON');
+  if(!Array.isArray(spec.parts)||!spec.parts.length)throw new Error('design had no parts');
+  return spec;
+}
+
+async function jsonRender(request){
+  let spec;
+  try{ spec=await jsonRenderOnce(request,12); }
+  catch(e1){
+    log('Render attempt 1: '+e1.message+' — retrying simpler',1);
+    spec=await jsonRenderOnce(request+' (keep it simple)',6);  // smaller design, can't truncate
+  }
+  const res=renderBlueprint(spec);
+  const line=`Rendered "${spec.label||'design'}" in the Design Bay — ${spec.parts.length} parts. Take a look.`;
+  addMsg('a',line);speak(line);
+  convo.push({role:'assistant',content:[{type:'text',text:line}]});saveConvo();
+  return res;
+}
+
+const RENDER_RE=/\b(render|sketch|draw|design|model|blueprint|fabricate|design bay|in the bay|(build|make|create|add|put)\s+(me\s+)?(a|an|some|the)\b|show me a 3d)\b/i;
+async function send(text,opts={}){
+  if(!text.trim())return;
+  if(opts.visible!==false)addMsg('u',text);
+  convo.push({role:'user',content:text});saveConvo();
+  $('typ').classList.add('on');$('send').disabled=true;$('orbSt').textContent='PROCESSING';
+  const force=opts.forceTool||(RENDER_RE.test(text)?'render_blueprint':null);
+  renderedThisTurn=false;
+  try{
+    await runLoop(force);
+    // Guaranteed render path: if this was a render request but no tool call landed
+    // (some endpoints strip tool_choice), get the design as raw JSON instead.
+    if(force==='render_blueprint'&&!renderedThisTurn){
+      log('Tool call missing — using JSON render fallback',1);
+      await jsonRender(text);
+    }
+  }
+  catch(e){addMsg('a','API error: '+e.message+'\n\nIf this repeats, hit CLR MEM — a corrupted saved conversation is the usual cause.');log('API: '+e.message,1);}
+  finally{
+    $('typ').classList.remove('on');$('send').disabled=false;
+    $('orbSt').textContent='STANDBY';
+    // Conversation mode: if no speech is playing (voice off / silent turn), resume listening
+    setTimeout(maybeResumeListen, 600);
+  }
+}
+$('send').onclick=()=>{const v=$('ci').value.trim();if(!v)return;$('ci').value='';send(v);};
+$('ci').onkeydown=e=>{if(e.key==='Enter')$('send').click();};
+$('dbtn').onclick=async()=>{
+  const v=$('di').value.trim();if(!v)return;$('di').value='';
+  $('bayL').textContent='RENDERING…';
+  try{
+    await jsonRender(v);   // direct JSON pipeline — no tools, no agent loop
+  }catch(e){
+    $('bayL').textContent='RENDER FAILED';
+    log('Direct render failed: '+e.message,1);
+    addMsg('a','Render failed: '+e.message);
+  }
+};
+$('brief').onclick=()=>{showTab('comms');send('[SYSTEM: Give a natural status brief — open tasks, notes summary, last design, devices.]',{visible:false});};
+$('clrm').onclick=()=>{convo=[];LS.del('tame5_convo');$('clog').innerHTML='';addMsg('a','Memory cleared. Fresh start.');};
+
+// Replay history
+if(convo.length){
+  convo.forEach(m=>{
+    if(m.role==='user'&&typeof m.content==='string'&&!m.content.startsWith('[SYSTEM'))addMsg('u',m.content);
+    else if(m.role==='assistant'&&Array.isArray(m.content))m.content.filter(b=>b.type==='text'&&b.text.trim()).forEach(b=>addMsg('a',b.text));
+  });
+}else{
+  const h=new Date().getHours();
+  const g=h<5?'Working late':h<12?'Morning':h<17?'Afternoon':'Evening';
+  addMsg('a',g+" — TAME online. What are we working on?");
+}
+
+// ═══════════ VOICE ═══════════
+const wv=$('wave'),wc=wv.getContext('2d');
+let analyser=null,actx=null,vaf=null,voiceOn=true;
+const sizeWave=()=>{wv.width=wv.offsetWidth||300;wv.height=42;};
+sizeWave();addEventListener('resize',sizeWave);
+function wIdle(){
+  const W=wv.width,H=wv.height;wc.clearRect(0,0,W,H);
+  for(let i=0;i<50;i++){const h=2+Math.sin(Date.now()/900+i*.35)*1.5;
+    wc.fillStyle='rgba(0,200,255,.18)';wc.fillRect(i*(W/50),(H-h)/2,W/50-1,h);}
+  if(!analyser)requestAnimationFrame(wIdle);
+}
+wIdle();
+function wViz(){
+  if(!analyser){wIdle();return;}
+  const W=wv.width,H=wv.height,buf=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(buf);wc.clearRect(0,0,W,H);
+  for(let i=0;i<52;i++){
+    const v=buf[i/52*buf.length*.65|0]/255,bh=Math.max(2,v*H*.92);
+    const g=wc.createLinearGradient(0,H,0,0);g.addColorStop(0,'rgba(57,255,126,.9)');g.addColorStop(1,'rgba(0,200,255,.9)');
+    wc.fillStyle=g;wc.fillRect(i*(W/52),(H-bh)/2,W/52-1,bh);}
+  vaf=requestAnimationFrame(wViz);
+}
+function vizOn(){$('orb').classList.add('sp');$('orbSt').textContent='SPEAKING';
+  if(analyser){cancelAnimationFrame(vaf);wViz();return;}
+  actx=actx||new(AudioContext||webkitAudioContext)();
+  analyser=actx.createAnalyser();analyser.fftSize=256;
+  navigator.mediaDevices.getUserMedia({audio:true}).then(s=>{actx.createMediaStreamSource(s).connect(analyser);wViz();}).catch(()=>{analyser=null;wIdle();});}
+function vizOff(){$('orb').classList.remove('sp');$('orbSt').textContent='STANDBY';cancelAnimationFrame(vaf);analyser=null;wIdle();}
+
+// TTS
+const PREF=['Google UK English Female','Samantha','Karen','Moira','Tessa','Daniel','Google UK English Male','Microsoft Aria Online','Microsoft Jenny Online','Microsoft Guy Online','Google US English','Alex'];
+let selV=null;
+function popVoices(){
+  const vs=speechSynthesis.getVoices();if(!vs.length)return;
+  const score=v=>{let s=0;const n=PREF.findIndex(p=>v.name.includes(p));
+    if(n!==-1)s+=1000-n*10;if(v.localService===false)s+=50;
+    if(v.lang.startsWith('en-GB'))s+=8;else if(v.lang.startsWith('en'))s+=4;return s;};
+  const best=[...vs].map((v,i)=>({v,i,s:score(v)})).sort((a,b)=>b.s-a.s)[0]?.i??-1;
+  const sel=$('vsel');sel.innerHTML='';
+  [...vs.filter(v=>v.lang.startsWith('en')),...vs.filter(v=>!v.lang.startsWith('en'))].forEach(v=>{
+    const i=vs.indexOf(v),o=document.createElement('option');o.value=i;
+    o.textContent=`${v.name}${v.localService===false?' ★':''} (${v.lang})`;
+    if(i===best)o.selected=true;sel.appendChild(o);});
+  if(best>=0)selV=vs[best];
+}
+if(window.speechSynthesis){speechSynthesis.onvoiceschanged=popVoices;popVoices();}
+$('vsel').onchange=function(){selV=speechSynthesis.getVoices()[+this.value]||null;};
+
+// Pace
+const setPace=v=>{v=(+v).toFixed(2);LS.rawSet('tame5_pace',v);$('pace').value=v;$('paceV').textContent=v+'x';};
+setPace(LS.raw('tame5_pace','0.92'));
+$('pace').oninput=function(){setPace(this.value);};
+
+// ElevenLabs
+const elk=LS.raw('tame5_elk');
+if(elk){$('elk').value=elk;$('evsel').style.display='block';$('vsel').style.display='none';}
+$('elk').oninput=function(){const k=this.value.trim();
+  $('evsel').style.display=k.length>10?'block':'none';$('vsel').style.display=k.length>10?'none':'block';
+  if(k.length>10)LS.rawSet('tame5_elk',k);};
+
+function cleanSpeech(t){return t.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/`([^`]+)`/g,'$1')
+  .replace(/#{1,6}\s/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/[◈◇◉⊞♫▸]/g,'')
+  .replace(/([A-Z]{3,})/g,m=>m.toLowerCase()).replace(/\s+/g,' ').trim();}
+
+async function speakEL(text){
+  const key=LS.raw('tame5_elk'),vid=$('evsel').value;
+  try{
+    const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${vid}/stream`,{method:'POST',
+      headers:{'xi-api-key':key,'Content-Type':'application/json'},
+      body:JSON.stringify({text,model_id:'eleven_turbo_v2',voice_settings:{stability:.5,similarity_boost:.8}})});
+    if(!r.ok)throw new Error('EL '+r.status);
+    const url=URL.createObjectURL(await r.blob());
+    actx=actx||new(AudioContext||webkitAudioContext)();
+    if(!analyser){analyser=actx.createAnalyser();analyser.fftSize=256;}
+    const au=new Audio(url),src=actx.createMediaElementSource(au);
+    src.connect(analyser);analyser.connect(actx.destination);
+    ttsActive=true;vizOn();au.play();
+    au.onended=()=>{URL.revokeObjectURL(url);ttsActive=false;vizOff();maybeResumeListen();};
+  }catch(e){log('EL: '+e.message,1);speakBr(text);}
+}
+function speakBr(text){
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  const sents=cleanSpeech(text).match(/[^.!?]+[.!?]+/g)||[cleanSpeech(text)];
+  let i=0;
+  ttsActive=true;
+  const next=()=>{
+    if(i>=sents.length){ttsActive=false;vizOff();maybeResumeListen();return;}
+    const u=new SpeechSynthesisUtterance(sents[i].trim());
+    if(selV)u.voice=selV;
+    u.rate=+LS.raw('tame5_pace','0.92');u.pitch=1.05;
+    if(i===0)u.onstart=vizOn;
+    u.onend=()=>{i++;next();};u.onerror=()=>{i++;next();};
+    speechSynthesis.speak(u);
+  };
+  next();
+  const ka=setInterval(()=>{if(!speechSynthesis.speaking){clearInterval(ka);return;}speechSynthesis.pause();speechSynthesis.resume();},12000);
+}
+function speak(t){
+  if(!voiceOn)return;
+  stopAllListening(); // never let TAME hear herself
+  LS.raw('tame5_elk').length>10?speakEL(t):speakBr(t);
+}
+$('vtog').onclick=function(){voiceOn=!voiceOn;this.textContent=voiceOn?'◈ VOICE: ON':'◈ VOICE: OFF';if(!voiceOn)speechSynthesis.cancel();};
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,listening=false;
+
+// ═══════════ CONVERSATION MODE ═══════════
+// Tap CONVERSE once → hands-free loop: listen → send → TAME speaks → listen again.
+let convMode=false, convRec=null, ttsActive=false;
+
+function stopAllListening(){
+  if(convRec){try{convRec.abort();}catch{}convRec=null;}
+  if(typeof rec!=='undefined'&&rec&&listening){try{rec.abort();}catch{}}
+}
+
+function maybeResumeListen(){
+  if(convMode&&!ttsActive) setTimeout(()=>{if(convMode&&!ttsActive)convListen();},350);
+}
+
+function convListen(){
+  if(!convMode||!SR||convRec)return;
+  convRec=new SR();
+  convRec.continuous=false;convRec.interimResults=false;convRec.lang='en-US';
+  convRec.onstart=()=>{$('orbSt').textContent='LISTENING';$('orb').classList.add('sp');};
+  convRec.onresult=e=>{
+    const t=e.results[0][0].transcript.trim();
+    convRec=null;
+    if(t)send(t);
+  };
+  convRec.onerror=e=>{
+    convRec=null;
+    if(e.error==='not-allowed'){setConv(false);$('conv').textContent='◉ MIC DENIED';}
+    // 'no-speech' etc: onend will retry
+  };
+  convRec.onend=()=>{
+    if(convRec)convRec=null;
+    // If nothing was captured and TAME isn't talking, keep listening
+    if(convMode&&!ttsActive&&$('orbSt').textContent!=='PROCESSING') maybeResumeListen();
+    if(!convMode){$('orb').classList.remove('sp');$('orbSt').textContent='STANDBY';}
+  };
+  try{convRec.start();}catch{convRec=null;}
+}
+
+function setConv(on){
+  convMode=on;
+  const b=$('conv');
+  b.textContent=on?'◉ CONVERSING…':'◉ CONVERSE';
+  b.style.borderColor=on?'var(--green)':'var(--amber)';
+  b.style.color=on?'var(--green)':'var(--amber)';
+  if(on){log('Conversation mode on');convListen();}
+  else{stopAllListening();$('orb').classList.remove('sp');$('orbSt').textContent='STANDBY';log('Conversation mode off');}
+}
+if(SR) $('conv').onclick=()=>setConv(!convMode);
+else $('conv').style.display='none';
+
+// STT
+if(SR){
+  rec=new SR();rec.continuous=false;rec.interimResults=false;rec.lang='en-US';
+  rec.onstart=()=>{listening=true;$('mic').textContent='◉ LISTENING…';vizOn();};
+  rec.onresult=e=>{$('ci').value=e.results[0][0].transcript;$('send').click();};
+  rec.onerror=e=>log('Mic: '+e.error,1);
+  rec.onend=()=>{listening=false;$('mic').textContent='◉ HOLD: SPEAK';vizOff();};
+  const mic=$('mic');
+  mic.onmousedown=()=>{try{rec.start();}catch{}};
+  mic.onmouseup=()=>{try{rec.stop();}catch{}};
+  mic.onmouseleave=()=>{if(listening)try{rec.stop();}catch{}};
+  mic.addEventListener('touchstart',e=>{e.preventDefault();try{rec.start();}catch{}},{passive:false});
+  mic.addEventListener('touchend',e=>{e.preventDefault();try{rec.stop();}catch{}},{passive:false});
+}else{$('mic').disabled=true;$('mic').textContent='◉ N/A';}
+
+// ═══════════ SPOTIFY (PKCE) ═══════════
+let spTok='',spUriNow='';
+const SP_R=location.href.split('?')[0].split('#')[0];
+$('spUri').textContent=SP_R;
+const spH=()=>({'Authorization':'Bearer '+spTok,'Content-Type':'application/json'});
+function spConn(t){spTok=t;LS.rawSet('tame5_spt',t);LS.rawSet('tame5_sptt',Date.now());
+  $('spOn').style.display='block';$('spSetup').style.display='none';log('Spotify connected');spPoll();}
+function spDis(){spTok='';LS.del('tame5_spt');LS.del('tame5_spr');
+  $('spOn').style.display='none';$('spSetup').style.display='block';$('spSt').textContent='NOT CONNECTED';}
+async function pkce(){
+  const a=new Uint8Array(64);crypto.getRandomValues(a);
+  const ver=btoa(String.fromCharCode(...a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const dig=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ver));
+  const ch=btoa(String.fromCharCode(...new Uint8Array(dig))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  return{ver,ch};
+}
+(async()=>{
+  const p=new URLSearchParams(location.search),code=p.get('code');
+  if(p.get('error')){$('spSt').textContent='Auth cancelled.';history.replaceState(null,'',location.pathname);return;}
+  if(!code)return;
+  history.replaceState(null,'',location.pathname);
+  const cid=LS.raw('tame5_spc'),ver=LS.raw('tame5_spv');
+  if(!cid||!ver){$('spSt').textContent='Missing verifier — authorize again.';return;}
+  $('spSt').textContent='CONNECTING…';
+  try{
+    const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:SP_R,client_id:cid,code_verifier:ver})});
+    const d=await r.json();
+    if(d.access_token){LS.rawSet('tame5_spr',d.refresh_token||'');LS.del('tame5_spv');
+      spConn(d.access_token);if(d.expires_in)setTimeout(spRef,(d.expires_in-60)*1000);showTab('audio');}
+    else $('spSt').textContent='Token error: '+(d.error_description||d.error||'?');
+  }catch(e){$('spSt').textContent='Network: '+e.message;}
+})();
+async function spRef(){
+  const cid=LS.raw('tame5_spc'),ref=LS.raw('tame5_spr');if(!cid||!ref)return;
+  try{
+    const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({grant_type:'refresh_token',refresh_token:ref,client_id:cid})});
+    const d=await r.json();
+    if(d.access_token){spConn(d.access_token);if(d.refresh_token)LS.rawSet('tame5_spr',d.refresh_token);
+      if(d.expires_in)setTimeout(spRef,(d.expires_in-60)*1000);}
+  }catch(e){log('SP refresh: '+e.message,1);}
+}
+$('spGo').onclick=async()=>{
+  const cid=$('spCid').value.trim();if(!cid){alert('Paste your Client ID first.');return;}
+  LS.rawSet('tame5_spc',cid);
+  const{ver,ch}=await pkce();LS.rawSet('tame5_spv',ver);
+  location.href='https://accounts.spotify.com/authorize?'+new URLSearchParams({
+    response_type:'code',client_id:cid,scope:'user-read-playback-state user-modify-playback-state user-read-currently-playing',
+    redirect_uri:SP_R,code_challenge_method:'S256',code_challenge:ch,show_dialog:'true'});
+};
+$('spOff').onclick=spDis;
+$('spCid').value=LS.raw('tame5_spc');
+{const t=LS.raw('tame5_spt'),tt=+LS.raw('tame5_sptt','0');
+ if(t&&Date.now()-tt<3500000){spConn(t);if(Date.now()-tt>3000000)spRef();}
+ else if(LS.raw('tame5_spr')){$('spSt').textContent='RECONNECTING…';spRef();}}
+
+async function spCall(m,p,b){
+  if(!spTok)return{error:'Spotify not connected'};
+  try{
+    const o={method:m,headers:spH()};if(b)o.body=JSON.stringify(b);
+    const r=await fetch('https://api.spotify.com/v1'+p,o);
+    if(r.status===204)return{ok:true};
+    if(r.status===401){spRef();return{error:'Token refreshing — try again in a sec'};}
+    if(!r.ok){const e=await r.json().catch(()=>({}));return{error:e.error?.message||r.status};}
+    return r.json();
+  }catch(e){return{error:e.message};}
+}
+async function spSearch(q){
+  const d=await spCall('GET',`/search?q=${encodeURIComponent(q)}&type=track&limit=6`);
+  if(d.error)return{error:d.error};
+  const tr=(d.tracks?.items||[]).map(t=>({name:t.name,artist:t.artists[0]?.name,uri:t.uri}));
+  const el=$('spR');el.innerHTML='';
+  tr.forEach(t=>{
+    const r=document.createElement('div');
+    r.style.cssText='display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--pb);cursor:pointer;font-size:12px;';
+    r.innerHTML=`♫ <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.name)}<div class="hint" style="margin:0;">${esc(t.artist)}</div></span><button class="mini">▶</button>`;
+    r.querySelector('button').onclick=()=>spPlay(t.uri);
+    el.appendChild(r);
+  });
+  return{tracks:tr};
+}
+async function spPlay(uri){
+  const d=await spCall('PUT','/me/player/play',uri?{uris:[uri]}:undefined);
+  setTimeout(spPoll,800);return d.error?d:{ok:true};
+}
+async function spPoll(){
+  const d=await spCall('GET','/me/player/currently-playing');
+  if(!d||d.error||!d.item)return;
+  $('spT').textContent=d.item.name;$('spA').textContent=d.item.artists.map(a=>a.name).join(', ');
+  $('spF').style.width=(d.progress_ms/d.item.duration_ms*100)+'%';
+  spUriNow=d.item.uri;
+  const img=d.item.album?.images?.[0]?.url;
+  if(img)$('spArt').innerHTML=`<img src="${img}" style="width:52px;height:52px;object-fit:cover;">`;
+}
+setInterval(()=>{if(spTok)spPoll();},6000);
+$('spPl').onclick=async()=>{const d=await spCall('GET','/me/player');d.is_playing?spCall('PUT','/me/player/pause'):spPlay(spUriNow||undefined);};
+$('spNx').onclick=()=>{spCall('POST','/me/player/next');setTimeout(spPoll,700);};
+$('spPr').onclick=()=>{spCall('POST','/me/player/previous');setTimeout(spPoll,700);};
+$('spSh').onclick=async()=>{const d=await spCall('GET','/me/player');spCall('PUT','/me/player/shuffle?state='+!(d.shuffle_state||false));};
+$('spV').oninput=function(){spCall('PUT','/me/player/volume?volume_percent='+this.value);};
+$('spQb').onclick=()=>{const q=$('spQ').value.trim();if(q)spSearch(q);};
+$('spQ').onkeydown=e=>{if(e.key==='Enter')$('spQb').click();};
+
+// ─── SETTINGS ───
+$('akey').value=LS.raw('tame5_akey');
+if(LS.raw('tame5_akey'))$('akeySt').textContent='◉ KEY SAVED — direct API mode';
+$('akey').oninput=function(){
+  const k=this.value.trim();
+  if(k)LS.rawSet('tame5_akey',k);else LS.del('tame5_akey');
+  $('akeySt').textContent=k?'◉ KEY SAVED — direct API mode':'';
+};
+$('cinstr').value=LS.raw('tame5_instr');
+$('cisave').onclick=()=>{LS.rawSet('tame5_instr',$('cinstr').value);$('ciok').textContent='SAVED ✓';setTimeout(()=>$('ciok').textContent='',2000);};
+$('dexp').onclick=()=>{
+  const d={tasks:tasks.all(),devices:devs.all(),notes:LS.raw('tame5_notes'),convo,printers:LS.get('tame5_printers',[])};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));
+  a.download='tame-data.json';a.click();
+};
+$('dwipe').onclick=()=>{
+  if(!confirm('Wipe ALL TAME data?'))return;
+  Object.keys(localStorage).filter(k=>k.startsWith('tame5_')).forEach(k=>LS.del(k));
+  convo=[];$('clog').innerHTML='';addMsg('a','All data wiped. Fresh start.');
+  drawTasks();drawDevs();drawPrinters();
+};
+
+// ─── PROACTIVE ───
+let flags={bat:false,q:false,mat:false};
+const proactive=n=>send(`[SYSTEM: ${n} Respond as TAME noticing something naturally — a person, not an alert. Don't mention this trigger.]`,{visible:false});
+setTimeout(()=>proactive('Page loaded. 1-2 sentence natural check-in; mention open tasks if any.'),3000);
+setInterval(()=>{
+  if(batL!==null&&batL<.15&&!batC&&!flags.bat){flags.bat=true;proactive('Battery under 15%, not charging.');}
+  if(batL>.3)flags.bat=false;
+  const o=tasks.all().filter(t=>!t.done).length;
+  if(o>=6&&!flags.q){flags.q=true;proactive(o+' open tasks — casual nudge.');}
+  if(o<6)flags.q=false;
+  const lows=mats.all().filter(m=>m.low>0&&m.qty<=m.low).map(m=>m.name);
+  if(lows.length&&!flags.mat){flags.mat=true;proactive('Low stock: '+lows.join(', ')+'. Brief heads-up.');}
+  if(!lows.length)flags.mat=false;
+},300000);
+
+// ═══════════ MATERIALS ═══════════
+const mats={all:()=>LS.get('tame5_mats',[]),save:m=>LS.set('tame5_mats',m)};
+function drawMats(){
+  const m=mats.all(),el=$('matList');el.innerHTML='';
+  if(!m.length)el.innerHTML='<div class="hint">Nothing on the shelf yet.</div>';
+  m.forEach((x,i)=>{
+    const low=x.qty<=x.low;
+    const r=document.createElement('div');r.className='li';
+    r.innerHTML=`<span class="grow">${esc(x.name)}</span>
+      <span class="state ${low?'off':'on'}" style="${low?'color:var(--amber);border-color:rgba(255,176,32,.4);background:rgba(255,176,32,.08);':''}">${x.qty}${x.unit?' '+esc(x.unit):''}${low?' ⚠':''}</span>
+      <button class="mini" data-mp="${i}">＋</button><button class="mini" data-mm="${i}">－</button>
+      <button class="xdel" data-md="${i}">✕</button>`;
+    el.appendChild(r);
+  });
+  $('matN').textContent=m.length+' ITEMS';
+  el.querySelectorAll('[data-mp]').forEach(b=>b.onclick=()=>{const m=mats.all();m[+b.dataset.mp].qty++;mats.save(m);drawMats();});
+  el.querySelectorAll('[data-mm]').forEach(b=>b.onclick=()=>{const m=mats.all();m[+b.dataset.mm].qty=Math.max(0,m[+b.dataset.mm].qty-1);mats.save(m);drawMats();});
+  el.querySelectorAll('[data-md]').forEach(b=>b.onclick=()=>{const m=mats.all();m.splice(+b.dataset.md,1);mats.save(m);drawMats();});
+}
+$('mAdd').onclick=()=>{
+  const n=$('mName').value.trim(),q=+$('mQty').value;
+  if(!n||isNaN(q))return;
+  const m=mats.all();
+  m.push({name:n,qty:q,unit:$('mUnit').value.trim(),low:+$('mLow').value||0});
+  mats.save(m);['mName','mQty','mUnit','mLow'].forEach(i=>$(i).value='');drawMats();log('Material: '+n);
+};
+drawMats();
+
+// ═══════════ BUILD LOGS ═══════════
+const blogs={all:()=>LS.get('tame5_blogs',{}),save:b=>LS.set('tame5_blogs',b)};
+function activeProj(){return LS.raw('tame5_blactive');}
+function drawBL(){
+  const logs=blogs.all(),names=Object.keys(logs),act=activeProj();
+  const sel=$('blSel');sel.innerHTML='';
+  if(!names.length){sel.innerHTML='<option value="">— no projects —</option>';}
+  names.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;if(n===act)o.selected=true;sel.appendChild(o);});
+  $('blActive').textContent=act?act.toUpperCase():'NO PROJECT';
+  const el=$('blEntries');el.innerHTML='';
+  if(act&&logs[act]){
+    [...logs[act]].reverse().forEach(e=>{
+      const d=document.createElement('div');
+      d.style.cssText='padding:6px 0;border-bottom:1px solid rgba(0,200,255,.06);font-size:12px;';
+      d.innerHTML=`<span class="lt">${esc(e.t)}</span>${esc(e.text)}`;
+      el.appendChild(d);
+    });
+  }else el.innerHTML='<div class="hint">Select or create a project.</div>';
+}
+function blAdd(project,entry){
+  const logs=blogs.all();
+  const k=Object.keys(logs).find(x=>x.toLowerCase()===project.toLowerCase())||project;
+  if(!logs[k])logs[k]=[];
+  logs[k].push({t:new Date().toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}),text:entry});
+  blogs.save(logs);LS.rawSet('tame5_blactive',k);drawBL();
+  return{success:true,message:`Logged to "${k}".`};
+}
+$('blSel').onchange=function(){LS.rawSet('tame5_blactive',this.value);drawBL();};
+$('blNew').onclick=()=>{
+  const n=prompt('Project name:');if(!n)return;
+  const logs=blogs.all();if(!logs[n])logs[n]=[];blogs.save(logs);
+  LS.rawSet('tame5_blactive',n);drawBL();
+};
+$('blAdd').onclick=()=>{
+  const v=$('blIn').value.trim(),act=activeProj();
+  if(!v)return;
+  if(!act){alert('Create or select a project first.');return;}
+  blAdd(act,v);$('blIn').value='';
+};
+$('blIn').onkeydown=e=>{if(e.key==='Enter')$('blAdd').click();};
+drawBL();
+
+// ═══════════ SUPPLIER SEARCH ═══════════
+document.querySelectorAll('[data-sup]').forEach(b=>b.onclick=()=>{
+  const q=$('supQ').value.trim();
+  const base=b.dataset.sup;
+  window.open(base.includes('?')||base.endsWith('=')||base.endsWith('/s/')?base+encodeURIComponent(q):base,'_blank');
+});
+$('supQ').onkeydown=e=>{if(e.key==='Enter')document.querySelector('[data-sup]').click();};
+
+// ═══════════ TIMERS ═══════════
+let timers=[];
+function beep(){
+  try{
+    actx=actx||new(AudioContext||webkitAudioContext)();
+    [0,0.2,0.4].forEach(d=>{
+      const o=actx.createOscillator(),g=actx.createGain();
+      o.frequency.value=880;o.connect(g);g.connect(actx.destination);
+      g.gain.setValueAtTime(.25,actx.currentTime+d);
+      g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d+.15);
+      o.start(actx.currentTime+d);o.stop(actx.currentTime+d+.15);
+    });
+  }catch(e){}
+}
+function addTimer(minutes,label){
+  if(!minutes||minutes<=0)return{success:false,message:'Invalid duration.'};
+  label=label||`${minutes} min timer`;
+  const end=Date.now()+minutes*60000;
+  const to=setTimeout(()=>{
+    beep();
+    const i=timers.findIndex(t=>t.end===end);if(i>=0)timers.splice(i,1);
+    drawTimers();
+    send(`[SYSTEM: Timer "${label}" just finished. Announce it naturally in one short sentence.]`,{visible:false});
+  },minutes*60000);
+  timers.push({label,end,to});drawTimers();
+  return{success:true,message:`Timer set: ${label} (${minutes} min).`};
+}
+function drawTimers(){
+  const el=$('tmList');el.innerHTML='';
+  if(!timers.length){el.innerHTML='<div class="hint">Ask TAME to set a timer.</div>';}
+  timers.forEach((t,i)=>{
+    const r=document.createElement('div');r.className='li';
+    r.innerHTML=`<span class="grow">${esc(t.label)}</span><span class="timer-ring" data-tr="${i}">--:--</span><button class="xdel" data-tc="${i}">✕</button>`;
+    el.appendChild(r);
+  });
+  $('tmN').textContent=timers.length;
+  el.querySelectorAll('[data-tc]').forEach(b=>b.onclick=()=>{clearTimeout(timers[+b.dataset.tc].to);timers.splice(+b.dataset.tc,1);drawTimers();});
+}
+setInterval(()=>{
+  document.querySelectorAll('[data-tr]').forEach(el=>{
+    const t=timers[+el.dataset.tr];if(!t)return;
+    const s=Math.max(0,(t.end-Date.now())/1000|0);
+    el.textContent=`${s/60|0}:${String(s%60).padStart(2,'0')}`;
+  });
+},1000);
+drawTimers();
+
+// ═══════════ WEATHER (Open-Meteo, no key) ═══════════
+let wxData=null;
+const WMO={0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Showers',81:'Showers',82:'Heavy showers',95:'Thunderstorm',96:'Storm + hail',99:'Storm + hail'};
+function loadWeather(){
+  if(!navigator.geolocation){$('wxD').textContent='No location access';return;}
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    try{
+      const{latitude:la,longitude:lo}=pos.coords;
+      const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph`);
+      const d=await r.json(),cu=d.current;
+      wxData={temp_f:cu.temperature_2m,humidity:cu.relative_humidity_2m,wind_mph:cu.wind_speed_10m,conditions:WMO[cu.weather_code]||'Unknown'};
+      $('wxT').textContent=Math.round(cu.temperature_2m)+'°';
+      $('wxD').textContent=wxData.conditions;
+      $('wxX').textContent=`HUM ${cu.relative_humidity_2m}% · WIND ${Math.round(cu.wind_speed_10m)} MPH`;
+      $('wxLoc').textContent=la.toFixed(1)+','+lo.toFixed(1);
+    }catch(e){$('wxD').textContent='Weather unavailable';}
+  },()=>{$('wxD').textContent='Location denied';},{timeout:8000});
+}
+loadWeather();setInterval(loadWeather,15*60000);
+
+// ═══════════ CAMERA ═══════════
+let camStream=null;
+$('camGo').onclick=async()=>{
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:true});
+    $('camV').srcObject=camStream;$('camV').style.display='block';$('camOff').style.display='none';
+    $('camGo').disabled=true;$('camSt').disabled=false;log('Camera on');
+  }catch(e){log('Camera denied',1);}
+};
+$('camSt').onclick=()=>{
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  $('camV').style.display='none';$('camOff').style.display='block';
+  $('camGo').disabled=false;$('camSt').disabled=true;log('Camera off');
+};
+
+// ═══════════ WAKE WORD ═══════════
+let wakeOn=false,wakeRec=null;
+if(SR){
+  $('wake').onclick=function(){
+    wakeOn=!wakeOn;
+    this.textContent=wakeOn?'◎ WAKE: ON':'◎ WAKE: OFF';
+    this.style.borderColor=wakeOn?'var(--green)':'var(--muted)';
+    this.style.color=wakeOn?'var(--green)':'var(--muted)';
+    if(wakeOn)startWake();else if(wakeRec)try{wakeRec.stop();}catch{}
+  };
+  function startWake(){
+    if(!wakeOn)return;
+    wakeRec=new SR();wakeRec.continuous=true;wakeRec.interimResults=false;wakeRec.lang='en-US';
+    wakeRec.onresult=e=>{
+      const t=e.results[e.results.length-1][0].transcript.trim();
+      const m=t.match(/\b(hey\s+)?tame\b[,.]?\s*(.*)/i);
+      if(m){
+        const cmd=m[2].trim();
+        if(cmd)send(cmd);
+        else{beep();$('orbSt').textContent='LISTENING';}
+      }
+    };
+    wakeRec.onerror=e=>{if(e.error==='not-allowed'){wakeOn=false;$('wake').textContent='◎ WAKE: DENIED';}};
+    wakeRec.onend=()=>{if(wakeOn)setTimeout(startWake,400);};
+    try{wakeRec.start();}catch{}
+  }
+}else $('wake').style.display='none';
+
+// ═══════════ PART EDITOR ═══════════
+function refreshPartEdit(){
+  const pe=$('pedit');
+  if(selPart<0||!parts[selPart]){pe.style.display='none';return;}
+  pe.style.display='block';
+  $('peditName').textContent='▸ '+parts[selPart].name;
+}
+const _drawParts=drawParts;
+drawParts=function(){_drawParts();refreshPartEdit();};
+function mutateSel(fn){
+  if(selPart<0||!parts[selPart])return;
+  const sp={...parts[selPart].spec};fn(sp);
+  parts[selPart]={...parts[selPart],spec:sp,color:sp.color||parts[selPart].color,center:[sp.x||0,sp.y||0,sp.z||0],tris:partMesh(sp)};
+  drawParts();
+}
+document.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{
+  const[ax,amt]=b.dataset.mv.split(',');
+  mutateSel(sp=>sp[ax]=(sp[ax]||0)+parseFloat(amt));
+});
+$('pgrow').onclick=()=>mutateSel(sp=>{sp.w=(sp.w||1)*1.15;sp.h=(sp.h||1)*1.15;sp.d=(sp.d||1)*1.15;});
+$('pshrink').onclick=()=>mutateSel(sp=>{sp.w=(sp.w||1)/1.15;sp.h=(sp.h||1)/1.15;sp.d=(sp.d||1)/1.15;});
+$('pdup').onclick=()=>{
+  if(selPart<0)return;
+  const sp={...parts[selPart].spec,x:(parts[selPart].spec.x||0)+1};
+  const name=parts[selPart].name+' copy';
+  parts.push({name,shape:sp.shape,color:sp.color||parts[selPart].color,center:[sp.x||0,sp.y||0,sp.z||0],tris:partMesh(sp),spec:sp});
+  selPart=parts.length-1;drawParts();
+};
+$('pdel').onclick=()=>{
+  if(selPart<0||!parts[selPart])return;
+  const name=parts[selPart].name;
+  parts.splice(selPart,1);
+  selPart=-1;drawParts();
+  log('Part deleted: '+name);
+};
+
+// ═══════════ BOOT SEQUENCE ═══════════
+(function boot(){
+  const lines=['> KERNEL INIT ............ OK','> RENDER ENGINE .......... OK','> VOICE INTERFACE ........ OK','> MEMORY CORE ............ '+(convo.length?convo.length+' TURNS':'CLEAN'),'> STORAGE ................ '+(_ls?'PERSISTENT':'SESSION ONLY (sandbox)'),'> BUILD v5.4-0802-0650','> ALL SYSTEMS NOMINAL'];
+  const box=$('bootlines');
+  lines.forEach((l,i)=>{
+    setTimeout(()=>{const d=document.createElement('div');d.className='bl';d.textContent=l;box.appendChild(d);},i*180);
+  });
+  setTimeout(()=>{$('boot').classList.add('off');setTimeout(()=>$('boot').remove(),600);},lines.length*180+500);
+  $('boot').onclick=()=>{$('boot').classList.add('off');setTimeout(()=>$('boot').remove(),300);};
+})();
+
+initBay();
+log('TAME v5.1 online');
+</script>
+</body>
+</html>
